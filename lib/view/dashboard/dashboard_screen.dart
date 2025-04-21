@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_graph_card.dart';
 import 'package:ut_worx/view/dashboard/work_summary_table.dart';
@@ -15,6 +16,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Create separate controllers for each scrollable widget
   final ScrollController _mainScrollController = ScrollController();
   final ScrollController _tableScrollController = ScrollController();
+
+  DateTime? selectedDate;
 
   @override
   void dispose() {
@@ -153,9 +156,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           Row(
                             children: [
-                              _customButton("Select Date", true,
-                                  fontSize: buttonFontSize,
-                                  padding: buttonPadding),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    backgroundColor: Colors.white,
+                                    padding: buttonPadding,
+                                  ),
+                                  onPressed: () {
+                                    _selectDate(context);
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 6),
+                                        child: Icon(
+                                            Icons.calendar_month_outlined,
+                                            color: Color(0XFF667085),
+                                            size: buttonFontSize),
+                                      ),
+                                      Text(
+                                        selectedDate != null
+                                            ? DateFormat('dd/MM/yyyy')
+                                                .format(selectedDate!)
+                                            : "Select Date",
+                                        style: TextStyle(
+                                          fontSize: buttonFontSize,
+                                          fontWeight: FontWeight.w400,
+                                          color: Color(0XFF667085),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               _customButton("Asset Type", false,
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
@@ -322,6 +361,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0XFF7DBD2C),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
   }
 
   Widget _summaryCard(
