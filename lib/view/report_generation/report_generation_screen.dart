@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:ut_worx/screen_models/notification_data_model.dart';
 import 'package:ut_worx/screen_models/report_generator_model.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
-import 'package:ut_worx/utils/custom_widgets/custom_header.dart';
+import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
-import 'package:ut_worx/view/notification_creation/create_notification.dart';
 
 class ReportGeneratorScreen extends StatefulWidget {
   const ReportGeneratorScreen({super.key});
@@ -17,11 +15,6 @@ class _ReportGeneratorScreenState extends State<ReportGeneratorScreen> {
   @override
   Widget build(BuildContext context) {
     return ResponsiveLayout(builder: (context, responsives) {
-      final appBarHeight = responsives.deviceValue(
-        mobile: 50.0,
-        tablet: 70.0,
-        desktop: 80.0,
-      );
       return Scaffold(
         backgroundColor: const Color(0XFFF4F7FE),
         drawer: const CustomDrawer(),
@@ -103,11 +96,6 @@ class ReportGenerator extends StatelessWidget {
         mobile: 10.0,
         tablet: 12.0,
         desktop: 16.0,
-      );
-      final buttonPadding = responsive.deviceValue(
-        mobile: 8.0,
-        tablet: 10.0,
-        desktop: 12.0,
       );
       final tableTitle = responsive.deviceValue(
         mobile: 10.0,
@@ -230,19 +218,20 @@ class ReportGenerator extends StatelessWidget {
                           WidgetStateProperty.all(Color(0XFFE5E7EB)),
                       dataTextStyle: TextStyle(fontSize: tableTitle),
                       headingRowHeight: tableRowHeight,
+                      // ignore: deprecated_member_use
                       dataRowHeight: tableRowHeight,
                       columns: const [
                         DataColumn(
                             label: Expanded(
                                 child: Text(
-                          'WORK ORDER ID',
+                          'ORDER ID',
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ))),
                         DataColumn(
                             label: Expanded(
                                 child: Text(
-                          'WORK ID',
+                          'ORDER TITLE',
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ))),
@@ -271,7 +260,7 @@ class ReportGenerator extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: _getStatusColor(data.status),
+                                color: getStatusColor(data.status),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
@@ -291,34 +280,6 @@ class ReportGenerator extends StatelessWidget {
         ),
       );
     });
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Completed':
-        return Colors.green.shade400;
-      case 'Pending':
-        return Colors.yellow.shade700;
-      case 'Rejected':
-        return Colors.red.shade400;
-      case 'OnHold':
-        return Colors.blue.shade400;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  Color _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'High':
-        return Colors.red;
-      case 'Medium':
-        return Colors.orange;
-      case 'Low':
-        return Colors.green;
-      default:
-        return Colors.black;
-    }
   }
 
   Widget _customButton(

@@ -6,7 +6,6 @@ import 'package:ut_worx/firebase_models/fb_preliminary_report_model.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
-import 'package:ut_worx/view/preliminary_report/create_preliminary_report.dart';
 
 class PreliminaryReportScreen extends StatelessWidget {
   const PreliminaryReportScreen({super.key});
