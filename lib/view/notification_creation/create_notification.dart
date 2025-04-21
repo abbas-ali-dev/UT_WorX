@@ -265,12 +265,6 @@ class _NotificationDialogState extends State<NotificationDialog> {
             desktop: 12.0,
           );
 
-          final buttonPadding = responsive.deviceValue(
-            mobile: 12.0,
-            tablet: 14.0,
-            desktop: 16.0,
-          );
-
           return Container(
             width: dialogWidth,
             padding: EdgeInsets.all(padding),

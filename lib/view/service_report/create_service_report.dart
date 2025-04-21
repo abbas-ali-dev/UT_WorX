@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:intl/intl.dart';
+import 'package:ut_worx/constant/enums.dart';
 import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:uuid/uuid.dart';
@@ -25,6 +26,7 @@ class _CreateServiceReportState extends State<CreateServiceReport> {
   final TextEditingController _technicianController = TextEditingController();
 
   DateTime? selectedDate;
+  SparePart? _selectedSparePart;
 
   @override
   void initState() {
@@ -101,6 +103,11 @@ class _CreateServiceReportState extends State<CreateServiceReport> {
 
     if (_sparePartsController.text.isEmpty) {
       Toaster.showToast('Please enter spare parts used');
+      return;
+    }
+
+    if (_selectedSparePart == null) {
+      Toaster.showToast('Please select spare parts used');
       return;
     }
 
@@ -222,12 +229,6 @@ class _CreateServiceReportState extends State<CreateServiceReport> {
             mobile: 8.0,
             tablet: 10.0,
             desktop: 12.0,
-          );
-
-          final buttonPadding = responsive.deviceValue(
-            mobile: 12.0,
-            tablet: 14.0,
-            desktop: 16.0,
           );
 
           return Container(
@@ -360,10 +361,10 @@ class _CreateServiceReportState extends State<CreateServiceReport> {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  TextFormField(
-                    controller: _sparePartsController,
+                  DropdownButtonFormField<SparePart>(
+                    value: _selectedSparePart,
                     decoration: InputDecoration(
-                      hintText: 'Enter spare parts used',
+                      hintText: 'Select spare parts used',
                       hintStyle: TextStyle(color: Colors.grey),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -376,6 +377,28 @@ class _CreateServiceReportState extends State<CreateServiceReport> {
                         vertical: 8,
                       ),
                     ),
+                    items: SparePart.values.map((SparePart part) {
+                      return DropdownMenuItem<SparePart>(
+                        value: part,
+                        child: Text(part
+                            .toString()
+                            .split('.')
+                            .last
+                            .replaceAll('_', ' ')),
+                      );
+                    }).toList(),
+                    onChanged: (SparePart? newValue) {
+                      setState(() {
+                        _selectedSparePart = newValue;
+                        if (newValue != null) {
+                          _sparePartsController.text = newValue
+                              .toString()
+                              .split('.')
+                              .last
+                              .replaceAll('_', ' ');
+                        }
+                      });
+                    },
                   ),
                   SizedBox(height: verticalSpacing),
 

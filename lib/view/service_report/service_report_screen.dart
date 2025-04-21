@@ -1,6 +1,7 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
@@ -32,7 +33,7 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
 }
 
 class ServiceReportTable extends StatelessWidget {
-  ServiceReportTable({super.key});
+  const ServiceReportTable({super.key});
 
   @override
   Widget build(BuildContext context) {

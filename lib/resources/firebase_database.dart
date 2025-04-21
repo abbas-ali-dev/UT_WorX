@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ut_worx/firebase_models/fb_notification_model.dart';
 import 'package:ut_worx/screen_models/user_model.dart';
 
 class FirebaseDatabase {

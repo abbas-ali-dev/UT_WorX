@@ -1,5 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/firebase_models/fb_work_scheduling_model.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
@@ -24,36 +27,38 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
   }
 
   void _checkForFollowUpRequests() {
-    // First, get all existing work order IDs from the WorkScheduling collection
+    // Listen for preliminary reports with followUps=true
     FirebaseFirestore.instance
-        .collection('WorkScheduling')
-        .get()
-        .then((workSchedules) {
-      // Extract all work order IDs into a set for efficient lookup
-      final Set<String> existingWorkOrderIds = workSchedules.docs
-          .map((doc) => (doc.data()['workOrderId'] ?? '') as String)
+        .collection('PreliminaryReports')
+        .where('followUps', isEqualTo: true)
+        .snapshots()
+        .listen((snapshot) async {
+      if (snapshot.docs.isEmpty) {
+        // If there are no follow-up requests at all
+        setState(() {
+          hasFollowUpRequests = false;
+        });
+        return;
+      }
+
+      // Get all work scheduling documents to check which follow-ups already have schedules
+      final workSchedulingSnapshot =
+          await FirebaseFirestore.instance.collection('WorkScheduling').get();
+
+      final scheduledOrderIds = workSchedulingSnapshot.docs
+          .map((doc) => doc.data()['workOrderId'] as String)
           .toSet();
 
-      // Now listen for preliminary reports with followUps=true
-      FirebaseFirestore.instance
-          .collection('PreliminaryReports')
-          .where('followUps', isEqualTo: true)
-          .snapshots()
-          .listen((snapshot) {
-        if (mounted) {
-          // Filter out reports that already have work schedules
-          final pendingReports = snapshot.docs.where((doc) {
-            final data = doc.data();
-            final reportOrderId = data['orderId'] ?? '';
-            // Only include reports whose IDs are NOT in the existing work schedules
-            return !existingWorkOrderIds.contains(reportOrderId);
-          }).toList();
+      // Filter out follow-up requests that already have work schedules
+      final pendingFollowUps = snapshot.docs.where((doc) {
+        final data = doc.data();
+        final orderId = data['orderId'] as String?;
+        return orderId != null && !scheduledOrderIds.contains(orderId);
+      }).toList();
 
-          setState(() {
-            // Only show notification if there are pending reports that haven't been scheduled
-            hasFollowUpRequests = pendingReports.isNotEmpty;
-          });
-        }
+      // Update state based on whether there are any pending follow-ups
+      setState(() {
+        hasFollowUpRequests = pendingFollowUps.isNotEmpty;
       });
     });
   }
@@ -353,7 +358,38 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
     return '${date.day}/${date.month}/${date.year}';
   }
 
-  void _showFollowUpRequestsDialog(BuildContext context) {
+  void _showFollowUpRequestsDialog(BuildContext context) async {
+    final followUpRequestsSnapshot = await FirebaseFirestore.instance
+        .collection('PreliminaryReports')
+        .where('followUps', isEqualTo: true)
+        .get();
+
+    // Get all work scheduling documents to check which follow-ups already have schedules
+    final workSchedulingSnapshot =
+        await FirebaseFirestore.instance.collection('WorkScheduling').get();
+
+    final scheduledOrderIds = workSchedulingSnapshot.docs
+        .map((doc) => doc.data()['workOrderId'] as String)
+        .toSet();
+
+    // Filter out follow-up requests that already have work schedules
+    final pendingFollowUps = followUpRequestsSnapshot.docs.where((doc) {
+      final data = doc.data();
+      final orderId = data['orderId'] as String?;
+      return orderId != null && !scheduledOrderIds.contains(orderId);
+    }).toList();
+
+    // Update state based on whether there are any pending follow-ups
+    setState(() {
+      hasFollowUpRequests = pendingFollowUps.isNotEmpty;
+    });
+
+    if (pendingFollowUps.isEmpty) {
+      // If there are no pending follow-up requests, show a message
+      Toaster.showToast('No pending follow-up requests');
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
