@@ -1,12 +1,14 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:ut_worx/constant/enums.dart';
 import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/resources/firebase_auth_method.dart';
 import 'package:ut_worx/view/auth/login_screen.dart';
 import 'package:ut_worx/view/dashboard/dashboard_screen.dart';
+import 'package:ut_worx/view/home_page.dart';
 import '../../utils/resposive_design/responsive_layout.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -82,14 +84,15 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
 
-      if (selectedUserLevel == null) {
+      if (selectedUserLevel == null ||
+          selectedUserLevel == 'Select User Level') {
         setState(() {
           _showError = true;
           _errorMessage = 'Please select a user level';
         });
         return;
       }
-
+      EasyLoading.show();
       // Attempt signup
       var res = await FirebaseAuthMethods().signUpUser(
         email: _emailController.text,
@@ -98,18 +101,22 @@ class _SignupScreenState extends State<SignupScreen> {
         role: selectedUserLevel.toString(),
       );
       if (res.toString() == 'success') {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DashboardScreen(),
-          ),
-          (route) => false,
-        );
+        EasyLoading.dismiss();
+        _emailController.clear();
+        _passwordController.clear();
+        _confirmPasswordController.clear();
+        selectedUserLevel = 'Select User Level';
+        setState(() {
+          _showError = false;
+        });
+
         Toaster.showToast('Account created successfully');
       } else {
+        EasyLoading.dismiss();
         Toaster.showToast('Error: $res');
       }
     } catch (e) {
+      EasyLoading.dismiss();
       Toaster.showToast('Error: $e');
     }
   }
@@ -400,8 +407,9 @@ class _SignupScreenState extends State<SignupScreen> {
                                   Text(
                                     selectedUserLevel ?? "Select User Level",
                                     style: TextStyle(
+                                      fontWeight: FontWeight.w500,
                                       color: selectedUserLevel == null
-                                          ? Color(0XFF667085)
+                                          ? Color(0XFF737373)
                                           : Colors.black,
                                     ),
                                   ),
