@@ -126,9 +126,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             spacing: buttonSpacing,
                             runSpacing: buttonSpacing,
                             children: [
-                              _customButton("Select Date", true,
-                                  fontSize: buttonFontSize,
-                                  padding: buttonPadding),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    backgroundColor: Colors.white,
+                                    padding: buttonPadding,
+                                  ),
+                                  onPressed: () {
+                                    _selectDate(context);
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(right: 6),
+                                        child: Icon(
+                                            Icons.calendar_month_outlined,
+                                            color: Color(0XFF667085),
+                                            size: buttonFontSize),
+                                      ),
+                                      Text(
+                                        selectedDate != null
+                                            ? DateFormat('dd/MM/yyyy')
+                                                .format(selectedDate!)
+                                            : "Select Date",
+                                        style: TextStyle(
+                                          fontSize: buttonFontSize,
+                                          fontWeight: FontWeight.w400,
+                                          color: Color(0XFF667085),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               _customButton("Asset Type", false,
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
