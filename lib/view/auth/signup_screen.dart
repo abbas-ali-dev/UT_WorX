@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:ut_worx/constant/enums.dart';
 import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/resources/firebase_auth_method.dart';
 import 'package:ut_worx/view/auth/login_screen.dart';
@@ -25,6 +26,15 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _showError = false;
   String _errorMessage = '';
   bool _isObscure = true;
+
+  // Selected user level
+  String? selectedUserLevel;
+
+  // Track which item is being hovered
+  int? hoveredIndex;
+
+  // Track if dropdown is open
+  bool isDropdownOpen = false;
 
   @override
   void dispose() {
@@ -72,11 +82,20 @@ class _SignupScreenState extends State<SignupScreen> {
         return;
       }
 
+      if (selectedUserLevel == null) {
+        setState(() {
+          _showError = true;
+          _errorMessage = 'Please select a user level';
+        });
+        return;
+      }
+
       // Attempt signup
       var res = await FirebaseAuthMethods().signUpUser(
         email: _emailController.text,
         password: _passwordController.text,
         confirmPassword: _confirmPasswordController.text,
+        role: selectedUserLevel.toString(),
       );
       if (res.toString() == 'success') {
         Navigator.pushAndRemoveUntil(
@@ -336,6 +355,125 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ? Icons.visibility_off
                                 : Icons.visibility,
                           ),
+                        ),
+                      ),
+                    ),
+
+                    SizedBox(
+                        height: responsive.deviceValue(
+                      mobile: 12.0,
+                      desktop: 20.0,
+                    )),
+
+                    // Confirm Password Field
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "Select User Level",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: labelFontSize,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0XFF737373)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            isDropdownOpen = !isDropdownOpen;
+                          });
+                        },
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 45,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    selectedUserLevel ?? "Select User Level",
+                                    style: TextStyle(
+                                      color: selectedUserLevel == null
+                                          ? Color(0XFF667085)
+                                          : Colors.black,
+                                    ),
+                                  ),
+                                  Icon(
+                                    isDropdownOpen
+                                        ? Icons.arrow_drop_up
+                                        : Icons.arrow_drop_down,
+                                    color: Color(0XFF667085),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isDropdownOpen)
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Column(
+                                  children: List.generate(
+                                    UserLevel.values.length,
+                                    (index) => MouseRegion(
+                                      onEnter: (_) {
+                                        setState(() {
+                                          hoveredIndex = index;
+                                        });
+                                      },
+                                      onExit: (_) {
+                                        setState(() {
+                                          hoveredIndex = null;
+                                        });
+                                      },
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            selectedUserLevel = UserLevel.values
+                                                .elementAt(index)
+                                                .toString()
+                                                .split('.')[1];
+                                            debugPrint(
+                                                'Selected User Level: $selectedUserLevel');
+                                            isDropdownOpen = false;
+                                          });
+                                        },
+                                        child: Container(
+                                          width: double.infinity,
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 10,
+                                            horizontal: 8,
+                                          ),
+                                          color: hoveredIndex == index
+                                              ? Color(0XFF7DBD2C)
+                                                  .withOpacity(0.1)
+                                              : Colors.transparent,
+                                          child: Text(
+                                            UserLevel.values
+                                                .elementAt(index)
+                                                .toString()
+                                                .split('.')[1],
+                                            style: TextStyle(
+                                              color: hoveredIndex == index
+                                                  ? Color(0XFF7DBD2C)
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),

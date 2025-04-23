@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:ut_worx/constant/toaster.dart';
-import 'package:ut_worx/screen_models/user_model.dart';
 
 class FirebaseAuthMethods {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -13,12 +11,14 @@ class FirebaseAuthMethods {
     required String email,
     required String password,
     required String confirmPassword,
+    required String role,
   }) async {
     String res = "error occurred";
     try {
       if (email.isNotEmpty ||
           password.isNotEmpty ||
-          confirmPassword.isNotEmpty) {
+          confirmPassword.isNotEmpty ||
+          role.isNotEmpty) {
         // register user
         UserCredential cred = await _auth.createUserWithEmailAndPassword(
             email: email, password: password);
@@ -28,7 +28,7 @@ class FirebaseAuthMethods {
           'email': email,
           'password': password,
           'uid': cred.user!.uid,
-          'role': 'admin',
+          'role': role,
         });
         res = "success";
       }
