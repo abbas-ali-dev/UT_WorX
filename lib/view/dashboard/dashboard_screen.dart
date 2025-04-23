@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ut_worx/utils/custom_widgets/custom_button.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_graph_card.dart';
 import 'package:ut_worx/view/dashboard/work_summary_table.dart';
@@ -165,13 +166,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                               ),
-                              _customButton("Asset Type", false,
+                              customButton("Asset Type", false,
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
-                              _customButton("View Reports", false,
+                              customButton("View Reports", false,
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
-                              _customButton("Add Work", false,
+                              customButton("Add Work", false,
                                   color: Color(0XFF7DBD2C),
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
@@ -231,13 +232,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                               ),
-                              _customButton("Asset Type", false,
+                              customButton("Asset Type", false,
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
-                              _customButton("View Reports", false,
+                              customButton("View Reports", false,
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
-                              _customButton("Add Work", false,
+                              customButton("Add Work", false,
                                   color: Color(0XFF7DBD2C),
                                   fontSize: buttonFontSize,
                                   padding: buttonPadding),
@@ -353,50 +354,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       );
     });
-  }
-
-  Widget _customButton(
-    String text,
-    bool? isIcon, {
-    Color color = Colors.white,
-    double? fontSize,
-    EdgeInsetsGeometry? padding,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
-          backgroundColor: color,
-          padding: padding ??
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        ),
-        onPressed: () {},
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (isIcon == true)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Icon(Icons.calendar_month_outlined,
-                    color: Color(0XFF667085), size: fontSize),
-              ),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: fontSize ?? 14,
-                fontWeight: FontWeight.w400,
-                color: color == Color(0XFF7DBD2C)
-                    ? Colors.white
-                    : Color(0XFF667085),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
