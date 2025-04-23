@@ -128,7 +128,7 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
                                 children: [
                                   IconButton(
                                     icon: Icon(
-                                      Icons.assignment_return_outlined,
+                                      Icons.notifications_active_outlined,
                                       color: Color(0XFF7DBD2C),
                                       size: 24,
                                     ),

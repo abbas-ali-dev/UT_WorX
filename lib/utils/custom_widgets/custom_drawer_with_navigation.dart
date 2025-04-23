@@ -143,9 +143,17 @@ class CustomDrawerWithNavigation extends StatelessWidget {
                   context: context,
                 ),
                 _drawerItem(
+                  Icons.inventory_outlined,
+                  "My Task",
+                  index: 6,
+                  iconSize: iconSize,
+                  fontSize: fontSize,
+                  context: context,
+                ),
+                _drawerItem(
                   Icons.alarm,
                   "PM Scheduler",
-                  index: 6,
+                  index: 7,
                   iconSize: iconSize,
                   fontSize: fontSize,
                   context: context,
@@ -153,7 +161,7 @@ class CustomDrawerWithNavigation extends StatelessWidget {
                 _drawerItem(
                   Icons.person_add_alt,
                   "Create New User",
-                  index: 7,
+                  index: 8,
                   iconSize: iconSize,
                   fontSize: fontSize,
                   context: context,

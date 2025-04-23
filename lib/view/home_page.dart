@@ -5,6 +5,7 @@ import 'package:ut_worx/utils/custom_widgets/custom_header.dart'; // Import Cust
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:ut_worx/view/auth/signup_screen.dart';
 import 'package:ut_worx/view/dashboard/dashboard_screen.dart';
+import 'package:ut_worx/view/my_task/my_task.dart';
 import 'package:ut_worx/view/notification_creation/notification_screen.dart';
 import 'package:ut_worx/view/pms/pms_screen.dart';
 import 'package:ut_worx/view/preliminary_report/preliminary_report_screen.dart';
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     WorkSchedulingScreen(),
     ServiceReportScreen(),
     ReportGeneratorScreen(),
+    MyTaskScreen(),
     PMSScreen(),
     SignupScreen(),
   ];

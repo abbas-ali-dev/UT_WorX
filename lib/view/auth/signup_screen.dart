@@ -6,9 +6,6 @@ import 'package:get/get.dart';
 import 'package:ut_worx/constant/enums.dart';
 import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/resources/firebase_auth_method.dart';
-import 'package:ut_worx/view/auth/login_screen.dart';
-import 'package:ut_worx/view/dashboard/dashboard_screen.dart';
-import 'package:ut_worx/view/home_page.dart';
 import '../../utils/resposive_design/responsive_layout.dart';
 
 class SignupScreen extends StatefulWidget {

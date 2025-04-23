@@ -4,6 +4,7 @@ import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:ut_worx/view/auth/login_screen.dart';
 import 'package:ut_worx/view/auth/signup_screen.dart';
 import 'package:ut_worx/view/dashboard/dashboard_screen.dart';
+import 'package:ut_worx/view/my_task/my_task.dart';
 import 'package:ut_worx/view/notification_creation/notification_screen.dart';
 import 'package:ut_worx/view/pms/pms_screen.dart';
 import 'package:ut_worx/view/preliminary_report/preliminary_report_screen.dart';
@@ -156,6 +157,20 @@ class CustomDrawer extends StatelessWidget {
                             MaterialPageRoute(
                               builder: (context) =>
                                   const ReportGeneratorScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _drawerItem(
+                        Icons.inventory_outlined,
+                        "My Task",
+                        iconSize: iconSize,
+                        fontSize: fontSize,
+                        onTapAction: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyTaskScreen(),
                             ),
                           );
                         },
