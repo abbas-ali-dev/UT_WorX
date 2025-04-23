@@ -3,6 +3,7 @@ import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer_with_navigation.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_header.dart'; // Import CustomHeader
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
+import 'package:ut_worx/view/auth/signup_screen.dart';
 import 'package:ut_worx/view/dashboard/dashboard_screen.dart';
 import 'package:ut_worx/view/notification_creation/notification_screen.dart';
 import 'package:ut_worx/view/pms/pms_screen.dart';
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     ServiceReportScreen(),
     ReportGeneratorScreen(),
     PMSScreen(),
+    SignupScreen(),
   ];
 
   void _onItemSelected(int index) {

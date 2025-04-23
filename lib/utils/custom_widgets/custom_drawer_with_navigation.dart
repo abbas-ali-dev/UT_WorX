@@ -150,6 +150,14 @@ class CustomDrawerWithNavigation extends StatelessWidget {
                   fontSize: fontSize,
                   context: context,
                 ),
+                _drawerItem(
+                  Icons.person_add_alt,
+                  "Create New User",
+                  index: 7,
+                  iconSize: iconSize,
+                  fontSize: fontSize,
+                  context: context,
+                ),
               ],
             ),
           ),
@@ -169,6 +177,7 @@ class CustomDrawerWithNavigation extends StatelessWidget {
             onTap: () async {
               await FirebaseAuthMethods().signOut();
               Navigator.pushAndRemoveUntil(
+                // ignore: use_build_context_synchronously
                 context,
                 MaterialPageRoute(
                   builder: (context) => const LoginScreen(),

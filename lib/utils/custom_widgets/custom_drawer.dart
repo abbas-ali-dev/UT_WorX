@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ut_worx/resources/firebase_auth_method.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:ut_worx/view/auth/login_screen.dart';
+import 'package:ut_worx/view/auth/signup_screen.dart';
 import 'package:ut_worx/view/dashboard/dashboard_screen.dart';
 import 'package:ut_worx/view/notification_creation/notification_screen.dart';
 import 'package:ut_worx/view/pms/pms_screen.dart';
@@ -169,6 +170,20 @@ class CustomDrawer extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => const PMSScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _drawerItem(
+                        Icons.person_add_alt,
+                        "Create New User",
+                        iconSize: iconSize,
+                        fontSize: fontSize,
+                        onTapAction: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SignupScreen(),
                             ),
                           );
                         },
