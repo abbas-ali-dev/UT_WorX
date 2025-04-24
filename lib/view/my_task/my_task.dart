@@ -326,32 +326,36 @@ class _MyTaskContentState extends State<MyTaskContent> {
                                 ),
                               ),
                               DataCell(
-                                PopupMenuButton<String>(
-                                  color: Color(0XFF7DBD2C),
-                                  icon:
-                                      Icon(Icons.more_vert, color: Colors.grey),
-                                  onSelected: (String value) async {
-                                    if (value == 'complete') {
-                                      // Update the status to 'Completed' in Firestore
-                                      await FirebaseFirestore.instance
-                                          .collection('WorkScheduling')
-                                          .doc(doc.id)
-                                          .update({'status': 'Completed'});
+                                data['status'] == 'Completed'
+                                    ? Text('Done')
+                                    : PopupMenuButton<String>(
+                                        color: Color(0XFF7DBD2C),
+                                        icon: Icon(Icons.more_vert,
+                                            color: Colors.grey),
+                                        onSelected: (String value) async {
+                                          if (value == 'complete') {
+                                            // Update the status to 'Completed' in Firestore
+                                            await FirebaseFirestore.instance
+                                                .collection('WorkScheduling')
+                                                .doc(doc.id)
+                                                .update(
+                                                    {'status': 'Completed'});
 
-                                      Toaster.showToast('Task completed');
-                                    }
-                                  },
-                                  itemBuilder: (BuildContext context) =>
-                                      <PopupMenuEntry<String>>[
-                                    const PopupMenuItem<String>(
-                                      value: 'complete',
-                                      child: Text(
-                                        'Mark as completed',
-                                        style: TextStyle(color: Colors.white),
+                                            Toaster.showToast('Task completed');
+                                          }
+                                        },
+                                        itemBuilder: (BuildContext context) =>
+                                            <PopupMenuEntry<String>>[
+                                          const PopupMenuItem<String>(
+                                            value: 'complete',
+                                            child: Text(
+                                              'Mark as completed',
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ],
-                                ),
                               ),
                             ]);
                           }).toList(),
