@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use// ignore_for_file: deprecated_member_use
 
 import 'dart:convert';
 
@@ -11,7 +11,9 @@ import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:ut_worx/view/notification_creation/create_notification.dart';
 
 class NotificationListScreen extends StatefulWidget {
-  const NotificationListScreen({super.key});
+  final String searchQuery;
+
+  const NotificationListScreen({super.key, this.searchQuery = ''});
 
   @override
   State<NotificationListScreen> createState() => _NotificationListScreenState();
@@ -24,14 +26,16 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       return Scaffold(
         backgroundColor: const Color(0XFFF4F7FE),
         drawer: const CustomDrawer(),
-        body: const NotificationTable(),
+        body: NotificationTable(searchQuery: widget.searchQuery),
       );
     });
   }
 }
 
 class NotificationTable extends StatelessWidget {
-  const NotificationTable({super.key});
+  final String searchQuery;
+
+  const NotificationTable({super.key, this.searchQuery = ''});
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +149,7 @@ class NotificationTable extends StatelessWidget {
                   }
 
                   // Convert Firestore documents to NotificationDataModel objects
-                  final List<NotificationModel> notificationData =
+                  List<NotificationModel> notificationData =
                       snapshot.data!.docs.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
                     DateTime? createdAt;
@@ -169,6 +173,43 @@ class NotificationTable extends StatelessWidget {
                       imageName: data['imageName'] ?? '',
                     );
                   }).toList();
+
+                  // Filter the notification data based on search query
+                  if (searchQuery.isNotEmpty) {
+                    final query = searchQuery.toLowerCase();
+                    notificationData = notificationData.where((notification) {
+                      return notification.orderId
+                              .toLowerCase()
+                              .contains(query) ||
+                          notification.orderTitle
+                              .toLowerCase()
+                              .contains(query) ||
+                          notification.assetSelection
+                              .toLowerCase()
+                              .contains(query) ||
+                          notification.createdBy
+                              .toLowerCase()
+                              .contains(query) ||
+                          notification.status.toLowerCase().contains(query) ||
+                          notification.priority.toLowerCase().contains(query) ||
+                          notification.description
+                              .toLowerCase()
+                              .contains(query) ||
+                          notification.workCategory
+                              .toLowerCase()
+                              .contains(query);
+                    }).toList();
+                  }
+
+                  // If no results after filtering
+                  if (notificationData.isEmpty && searchQuery.isNotEmpty) {
+                    return Center(
+                      child: Text(
+                        'No results found for "$searchQuery"',
+                        style: TextStyle(fontSize: tableTitle),
+                      ),
+                    );
+                  }
 
                   return Scrollbar(
                     thumbVisibility: true,

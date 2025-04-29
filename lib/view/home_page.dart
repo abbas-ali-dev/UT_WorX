@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer_with_navigation.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_header.dart'; // Import CustomHeader
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
@@ -22,22 +21,20 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    NotificationListScreen(),
-    PreliminaryReportScreen(),
-    WorkSchedulingScreen(),
-    ServiceReportScreen(),
-    ReportGeneratorScreen(),
-    MyTaskScreen(),
-    PMSScreen(),
-    SignupScreen(),
-  ];
+  String _searchQuery = '';
 
   void _onItemSelected(int index) {
     setState(() {
       _selectedIndex = index;
+      // Reset search query when changing screens
+      _searchQuery = '';
+    });
+  }
+
+  // Handle search query updates
+  void _handleSearch(String query) {
+    setState(() {
+      _searchQuery = query;
     });
   }
 
@@ -74,15 +71,17 @@ class _HomePageState extends State<HomePage> {
               Expanded(
                 child: Column(
                   children: [
-                    // CustomHeader inside the body
+                    // CustomHeader inside the body with search callback
                     SizedBox(
                       height: headerHeight,
-                      child: CustomHeader(),
+                      child: CustomHeader(
+                        onSearch: _handleSearch,
+                      ),
                     ),
 
                     // Screen content in an Expanded widget
                     Expanded(
-                      child: _screens[_selectedIndex],
+                      child: _getScreenWithSearch(),
                     ),
                   ],
                 ),
@@ -92,5 +91,33 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  // This method returns the appropriate screen with search functionality
+  Widget _getScreenWithSearch() {
+    switch (_selectedIndex) {
+      case 1: // NotificationListScreen index
+        return NotificationListScreen(searchQuery: _searchQuery);
+      // Add cases for other screens if they need search functionality
+      default:
+        // For screens without search functionality, return the original screen
+        return _getScreen(_selectedIndex);
+    }
+  }
+
+  Widget _getScreen(int index) {
+    final List<Widget> screens = [
+      const DashboardScreen(),
+      const NotificationListScreen(),
+      const PreliminaryReportScreen(),
+      const WorkSchedulingScreen(),
+      const ServiceReportScreen(),
+      const ReportGeneratorScreen(),
+      const MyTaskScreen(),
+      const PMSScreen(),
+      const SignupScreen(),
+    ];
+
+    return screens[index];
   }
 }

@@ -5,20 +5,46 @@ import 'package:ut_worx/resources/firebase_database.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 
 class CustomHeader extends StatefulWidget {
-  const CustomHeader({super.key});
+  // Add a callback function to handle search
+  final Function(String)? onSearch;
+
+  const CustomHeader({super.key, this.onSearch});
 
   @override
   State<CustomHeader> createState() => _CustomHeaderState();
 }
 
 class _CustomHeaderState extends State<CustomHeader> {
+  // Add a text controller for the search bar
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Add listener to detect changes in search text
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // This function will be called whenever the text changes
+  void _onSearchChanged() {
+    if (widget.onSearch != null) {
+      widget.onSearch!(_searchController.text);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String userId = FirebaseAuth.instance.currentUser!.uid;
     return ResponsiveLayout(
       builder: (context, responsive) {
         // Define responsive values for AppBar
-
         final searchBarHeight = responsive.deviceValue(
           mobile: 25.0,
           tablet: 28.0,
@@ -61,6 +87,7 @@ class _CustomHeaderState extends State<CustomHeader> {
               height: searchBarHeight,
               width: MediaQuery.sizeOf(context).width * 0.9,
               child: SearchBar(
+                controller: _searchController, // Add the controller here
                 elevation: WidgetStateProperty.all(0),
                 shape: WidgetStateProperty.all(RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -80,6 +107,12 @@ class _CustomHeaderState extends State<CustomHeader> {
                   ),
                 )),
                 padding: WidgetStateProperty.all(EdgeInsets.only(left: 10)),
+                onSubmitted: (value) {
+                  // Handle search submission
+                  if (widget.onSearch != null) {
+                    widget.onSearch!(value);
+                  }
+                },
               ),
             ),
             actions: [
