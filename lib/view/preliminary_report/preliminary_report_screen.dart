@@ -282,13 +282,16 @@ class _PreliminaryReportScreenState extends State<PreliminaryReportScreen> {
                                         child: Switch(
                                           value: data.followUps,
                                           onChanged: (value) {
-                                            FirebaseFirestore.instance
-                                                .collection(
-                                                    'PreliminaryReports')
-                                                .doc(data.orderId)
-                                                .update({
-                                              'followUps': true,
-                                            });
+                                            _showAddFindingsDialog(
+                                                context, data);
+
+                                            // FirebaseFirestore.instance
+                                            //     .collection(
+                                            //         'PreliminaryReports')
+                                            //     .doc(data.orderId)
+                                            //     .update({
+                                            //   'followUps': true,
+                                            // });
                                           },
                                           activeColor: Color(0XFF7DBD2C),
                                         ),
@@ -604,6 +607,139 @@ class _PreliminaryReportScreenState extends State<PreliminaryReportScreen> {
                       ),
                     ],
                   ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAddFindingsDialog(BuildContext context, PreliminaryReport report) {
+    final TextEditingController findingsController =
+        TextEditingController(text: report.findings);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: ResponsiveLayout(
+            builder: (context, responsive) {
+              final dialogWidth = responsive.deviceValue(
+                mobile: 320.0,
+                tablet: 450.0,
+                desktop: 550.0,
+              );
+
+              final padding = responsive.deviceValue(
+                mobile: 16.0,
+                tablet: 20.0,
+                desktop: 24.0,
+              );
+
+              final titleFontSize = responsive.deviceValue(
+                mobile: 18.0,
+                tablet: 20.0,
+                desktop: 22.0,
+              );
+
+              final contentFontSize = responsive.deviceValue(
+                mobile: 13.0,
+                tablet: 14.0,
+                desktop: 15.0,
+              );
+
+              return Container(
+                width: dialogWidth,
+                padding: EdgeInsets.all(padding),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Update Findings',
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Findings:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: contentFontSize,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    TextField(
+                      controller: findingsController,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: 'Enter your findings here...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey.shade100,
+                      ),
+                      style: TextStyle(fontSize: contentFontSize),
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: contentFontSize,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            // Update both followUps and findings in Firestore
+                            FirebaseFirestore.instance
+                                .collection('PreliminaryReports')
+                                .doc(report.orderId)
+                                .update({
+                              'followUps': true,
+                              'findings': findingsController.text,
+                            });
+
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0XFF7DBD2C),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: Text(
+                            'OK',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: contentFontSize,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               );
             },

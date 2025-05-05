@@ -477,7 +477,7 @@ class _NotificationTableState extends State<NotificationTable> {
 
                       // Description
                       buildDetailRow(
-                        'Description:',
+                        'Fault Observation:',
                         notification.description,
                         labelFontSize,
                         contentFontSize,
