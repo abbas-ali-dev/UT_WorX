@@ -1,0 +1,2 @@
+// global variables
+String globalUserLevel = '';

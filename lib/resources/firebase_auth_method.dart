@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:ut_worx/constant/global_var.dart';
 
 class FirebaseAuthMethods {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -42,7 +45,6 @@ class FirebaseAuthMethods {
   Future<User?> loginInUser({
     required String email,
     required String password,
-    required String role,
   }) async {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
@@ -54,7 +56,9 @@ class FirebaseAuthMethods {
           .doc(userCredential.user!.uid)
           .get();
 
-      if (userDoc.exists && userDoc.data()!['role'] == role) {
+      if (userDoc.exists && userDoc.data()!['role'] != null) {
+        globalUserLevel = userDoc.data()!['role'];
+        log('User Role: $globalUserLevel');
         return userCredential.user;
       } else {
         await signOut();

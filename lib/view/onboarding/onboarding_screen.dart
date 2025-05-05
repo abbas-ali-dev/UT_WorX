@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:ut_worx/constant/enums.dart';
+import 'package:ut_worx/utils/custom_widgets/method_channel.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:ut_worx/view/auth/login_screen.dart';
 
@@ -260,7 +261,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               ),
                             ),
                             onPressed: selectedUserLevel == null
-                                ? null
+                                ? NativeBridge.getNativeMessage
                                 : () {
                                     Navigator.pushReplacement(
                                       context,
