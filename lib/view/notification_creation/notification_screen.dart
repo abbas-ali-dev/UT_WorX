@@ -26,16 +26,31 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
       return Scaffold(
         backgroundColor: const Color(0XFFF4F7FE),
         drawer: const CustomDrawer(),
-        body: NotificationTable(searchQuery: widget.searchQuery),
+        body: NotificationTable(searchQuery1: widget.searchQuery),
       );
     });
   }
 }
 
-class NotificationTable extends StatelessWidget {
-  final String searchQuery;
+class NotificationTable extends StatefulWidget {
+  final String searchQuery1;
 
-  const NotificationTable({super.key, this.searchQuery = ''});
+  const NotificationTable({super.key, this.searchQuery1 = ''});
+
+  @override
+  State<NotificationTable> createState() => _NotificationTableState();
+}
+
+class _NotificationTableState extends State<NotificationTable> {
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -175,8 +190,8 @@ class NotificationTable extends StatelessWidget {
                   }).toList();
 
                   // Filter the notification data based on search query
-                  if (searchQuery.isNotEmpty) {
-                    final query = searchQuery.toLowerCase();
+                  if (widget.searchQuery1.isNotEmpty) {
+                    final query = widget.searchQuery1.toLowerCase();
                     notificationData = notificationData.where((notification) {
                       return notification.orderId
                               .toLowerCase()
@@ -202,10 +217,11 @@ class NotificationTable extends StatelessWidget {
                   }
 
                   // If no results after filtering
-                  if (notificationData.isEmpty && searchQuery.isNotEmpty) {
+                  if (notificationData.isEmpty &&
+                      widget.searchQuery1.isNotEmpty) {
                     return Center(
                       child: Text(
-                        'No results found for "$searchQuery"',
+                        'No results found for "${widget.searchQuery1}"',
                         style: TextStyle(fontSize: tableTitle),
                       ),
                     );
@@ -213,145 +229,161 @@ class NotificationTable extends StatelessWidget {
 
                   return Scrollbar(
                     thumbVisibility: true,
+                    controller: _verticalScrollController,
                     thickness: 8,
+                    radius: const Radius.circular(10),
                     child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Container(
-                        width: usefullLayout
-                            ? MediaQuery.sizeOf(context).width * 1.3
-                            : 800,
-                        margin: EdgeInsets.only(bottom: 15),
-                        child: DataTable(
-                          columnSpacing: 10,
-                          horizontalMargin: 10,
-                          headingTextStyle: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: tableTitle),
-                          headingRowColor:
-                              WidgetStateProperty.all(Color(0XFFE5E7EB)),
-                          dataTextStyle: TextStyle(fontSize: tableTitle),
-                          headingRowHeight: tableRowHeight,
-                          dataRowHeight: tableRowHeight,
-                          columns: const [
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'ORDER ID',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'ORDER TITLE',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'ASSET SELECTION',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                            // DataColumn(
-                            //     label: Expanded(
-                            //   child: Text(
-                            //     'PRELIM FINDING',
-                            //     overflow: TextOverflow.ellipsis,
-                            //     maxLines: 1,
-                            //   ),
-                            // )),
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'CREATED BY',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'STATUS',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'PRIORITY',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                            DataColumn(
-                                label: Expanded(
-                              child: Text(
-                                'ACTIONS',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ),
-                            )),
-                          ],
-                          rows: notificationData.map((data) {
-                            return DataRow(cells: [
-                              DataCell(Text(data.orderId)),
-                              DataCell(Text(data.orderTitle)),
-                              DataCell(Text(data.assetSelection)),
-                              // DataCell(Text(data.prelimFinding)),
-                              DataCell(Text(data.createdBy)),
-                              DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: getStatusColor(data.status),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                      controller: _verticalScrollController,
+                      scrollDirection: Axis.vertical,
+                      child: Scrollbar(
+                        controller: _horizontalScrollController,
+                        thumbVisibility: true,
+                        thickness: 8,
+                        radius: const Radius.circular(10),
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Container(
+                            width: usefullLayout
+                                ? MediaQuery.sizeOf(context).width * 1.3
+                                : 800,
+                            margin: EdgeInsets.only(bottom: 15),
+                            child: DataTable(
+                              columnSpacing: 10,
+                              horizontalMargin: 10,
+                              headingTextStyle: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: tableTitle),
+                              headingRowColor:
+                                  WidgetStateProperty.all(Color(0XFFE5E7EB)),
+                              dataTextStyle: TextStyle(fontSize: tableTitle),
+                              headingRowHeight: tableRowHeight,
+                              dataRowHeight: tableRowHeight,
+                              columns: const [
+                                DataColumn(
+                                    label: Expanded(
                                   child: Text(
-                                    data.status,
-                                    style: const TextStyle(color: Colors.white),
+                                    'ORDER ID',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  data.priority,
-                                  style: TextStyle(
-                                      color: getPriorityColor(data.priority)),
-                                ),
-                              ),
-                              DataCell(
-                                ElevatedButton(
-                                  onPressed: () {
-                                    _showNotificationDetailsDialog(
-                                        context, data);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Color(0XFF7DBD2C),
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    minimumSize: Size(60, 25),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
+                                )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'ORDER TITLE',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'ASSET SELECTION',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
+                                // DataColumn(
+                                //     label: Expanded(
+                                //   child: Text(
+                                //     'PRELIM FINDING',
+                                //     overflow: TextOverflow.ellipsis,
+                                //     maxLines: 1,
+                                //   ),
+                                // )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'CREATED BY',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'STATUS',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'PRIORITY',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'ACTIONS',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
+                              ],
+                              rows: notificationData.map((data) {
+                                return DataRow(cells: [
+                                  DataCell(Text(data.orderId)),
+                                  DataCell(Text(data.orderTitle)),
+                                  DataCell(Text(data.assetSelection)),
+                                  // DataCell(Text(data.prelimFinding)),
+                                  DataCell(Text(data.createdBy)),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: getStatusColor(data.status),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        data.status,
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
                                     ),
                                   ),
-                                  child: Text(
-                                    'View',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                                  DataCell(
+                                    Text(
+                                      data.priority,
+                                      style: TextStyle(
+                                          color:
+                                              getPriorityColor(data.priority)),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ]);
-                          }).toList(),
+                                  DataCell(
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        _showNotificationDetailsDialog(
+                                            context, data);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0XFF7DBD2C),
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        minimumSize: Size(60, 25),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'View',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ]);
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ),

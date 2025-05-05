@@ -35,6 +35,17 @@ class MyTaskContent extends StatefulWidget {
 
 class _MyTaskContentState extends State<MyTaskContent> {
   DateTime? selectedDate;
+  // Add scroll controllers
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  // Dispose controllers when widget is disposed
+  @override
+  void dispose() {
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,150 +226,168 @@ class _MyTaskContentState extends State<MyTaskContent> {
 
                   final tasks = snapshot.data!.docs;
 
+                  // Replace the existing Scrollbar with nested Scrollbars
                   return Scrollbar(
                     thumbVisibility: true,
+                    controller: _verticalScrollController,
                     thickness: 8,
+                    radius: const Radius.circular(10),
                     child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Container(
-                        width: usefullLayout
-                            ? MediaQuery.sizeOf(context).width * 1.3
-                            : 800,
-                        margin: EdgeInsets.only(bottom: 15),
-                        child: DataTable(
-                          columnSpacing: 20,
-                          horizontalMargin: 15,
-                          headingTextStyle: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: tableTitle),
-                          headingRowColor:
-                              WidgetStateProperty.all(Color(0XFFE5E7EB)),
-                          dataTextStyle: TextStyle(fontSize: tableTitle),
-                          headingRowHeight: tableRowHeight,
-                          dataRowHeight: tableRowHeight,
-                          columns: const [
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ORDER ID',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  "TECHNICIAN ASSIGNED",
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'DUE DATE',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'STATUS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ACTIONS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              ),
-                            ),
-                          ],
-                          rows: tasks.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-
-                            // Format the date
-                            String formattedDate = 'N/A';
-                            if (data['scheduledDate'] != null) {
-                              try {
-                                final dueDate =
-                                    (data['scheduledDate'] as Timestamp)
-                                        .toDate();
-                                formattedDate =
-                                    DateFormat('dd/MM/yyyy').format(dueDate);
-                              } catch (e) {
-                                formattedDate = 'Invalid Date';
-                              }
-                            }
-
-                            return DataRow(cells: [
-                              DataCell(Text(data['workOrderId'] ?? 'N/A')),
-                              DataCell(
-                                  Text(data['technicianAssigned'] ?? 'N/A')),
-                              DataCell(Text(formattedDate)),
-                              DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: getStatusColor(
-                                        data['status'] ?? 'Pending'),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    data['status'] ?? 'Pending',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                      controller: _verticalScrollController,
+                      scrollDirection: Axis.vertical,
+                      child: Scrollbar(
+                        controller: _horizontalScrollController,
+                        thumbVisibility: true,
+                        thickness: 8,
+                        radius: const Radius.circular(10),
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Container(
+                            width: usefullLayout
+                                ? MediaQuery.sizeOf(context).width * 1.3
+                                : 800,
+                            margin: EdgeInsets.only(bottom: 15),
+                            child: DataTable(
+                              columnSpacing: 20,
+                              horizontalMargin: 15,
+                              headingTextStyle: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: tableTitle),
+                              headingRowColor:
+                                  WidgetStateProperty.all(Color(0XFFE5E7EB)),
+                              dataTextStyle: TextStyle(fontSize: tableTitle),
+                              headingRowHeight: tableRowHeight,
+                              dataRowHeight: tableRowHeight,
+                              columns: const [
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ORDER ID',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                 ),
-                              ),
-                              DataCell(
-                                data['status'] == 'Completed'
-                                    ? Text('Done')
-                                    : PopupMenuButton<String>(
-                                        color: Color(0XFF7DBD2C),
-                                        icon: Icon(Icons.more_vert,
-                                            color: Colors.grey),
-                                        onSelected: (String value) async {
-                                          if (value == 'complete') {
-                                            // Update the status to 'Completed' in Firestore
-                                            await FirebaseFirestore.instance
-                                                .collection('WorkScheduling')
-                                                .doc(doc.id)
-                                                .update(
-                                                    {'status': 'Completed'});
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      "TECHNICIAN ASSIGNED",
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'DUE DATE',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'STATUS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ),
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ACTIONS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              rows: tasks.map((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
 
-                                            Toaster.showToast('Task completed');
-                                          }
-                                        },
-                                        itemBuilder: (BuildContext context) =>
-                                            <PopupMenuEntry<String>>[
-                                          const PopupMenuItem<String>(
-                                            value: 'complete',
-                                            child: Text(
-                                              'Mark as completed',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ],
+                                // Format the date
+                                String formattedDate = 'N/A';
+                                if (data['scheduledDate'] != null) {
+                                  try {
+                                    final dueDate =
+                                        (data['scheduledDate'] as Timestamp)
+                                            .toDate();
+                                    formattedDate = DateFormat('dd/MM/yyyy')
+                                        .format(dueDate);
+                                  } catch (e) {
+                                    formattedDate = 'Invalid Date';
+                                  }
+                                }
+
+                                return DataRow(cells: [
+                                  DataCell(Text(data['workOrderId'] ?? 'N/A')),
+                                  DataCell(Text(
+                                      data['technicianAssigned'] ?? 'N/A')),
+                                  DataCell(Text(formattedDate)),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
                                       ),
-                              ),
-                            ]);
-                          }).toList(),
+                                      decoration: BoxDecoration(
+                                        color: getStatusColor(
+                                            data['status'] ?? 'Pending'),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        data['status'] ?? 'Pending',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    data['status'] == 'Completed'
+                                        ? Text('Done')
+                                        : PopupMenuButton<String>(
+                                            color: Color(0XFF7DBD2C),
+                                            icon: Icon(Icons.more_vert,
+                                                color: Colors.grey),
+                                            onSelected: (String value) async {
+                                              if (value == 'complete') {
+                                                // Update the status to 'Completed' in Firestore
+                                                await FirebaseFirestore.instance
+                                                    .collection(
+                                                        'WorkScheduling')
+                                                    .doc(doc.id)
+                                                    .update({
+                                                  'status': 'Completed'
+                                                });
+
+                                                Toaster.showToast(
+                                                    'Task completed');
+                                              }
+                                            },
+                                            itemBuilder:
+                                                (BuildContext context) =>
+                                                    <PopupMenuEntry<String>>[
+                                              const PopupMenuItem<String>(
+                                                value: 'complete',
+                                                child: Text(
+                                                  'Mark as completed',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ]);
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ),

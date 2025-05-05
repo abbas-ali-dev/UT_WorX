@@ -18,12 +18,23 @@ class WorkSchedulingScreen extends StatefulWidget {
 
 class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
   bool hasFollowUpRequests = false;
+  // Add scroll controllers
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     // Set up listener for follow-up requests
     _checkForFollowUpRequests();
+  }
+
+  // Dispose controllers when widget is disposed
+  @override
+  void dispose() {
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
   }
 
   void _checkForFollowUpRequests() {
@@ -229,114 +240,132 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
                             return WorkSchedulingModel.fromJson(data);
                           }).toList();
 
-                          // Use your existing table UI with the fetched data
+                          // Replace the existing Scrollbar with nested Scrollbars
                           return Scrollbar(
                             thumbVisibility: true,
+                            controller: _verticalScrollController,
                             thickness: 8,
+                            radius: const Radius.circular(10),
                             child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Container(
-                                width: usefullLayout
-                                    ? MediaQuery.sizeOf(context).width * 1.3
-                                    : 800,
-                                margin: EdgeInsets.only(bottom: 15),
-                                child: DataTable(
-                                  columnSpacing: 20,
-                                  horizontalMargin: 15,
-                                  headingTextStyle: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: tableTitle),
-                                  headingRowColor: WidgetStateProperty.all(
-                                      Color(0XFFE5E7EB)),
-                                  dataTextStyle:
-                                      TextStyle(fontSize: tableTitle),
-                                  headingRowHeight: tableRowHeight,
-                                  dataRowHeight: tableRowHeight,
-                                  columns: const [
-                                    DataColumn(
-                                      label: Expanded(
-                                        child: Text(
-                                          'WORK ORDER ID',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Expanded(
-                                        child: Text(
-                                          'TECHNICIAN ASSIGNED',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Expanded(
-                                        child: Text(
-                                          'SCHEDULED DATE',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Expanded(
-                                        child: Text(
-                                          'SCHEDULED TIME',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Expanded(
-                                        child: Text(
-                                          'ESTIMATED HOURS',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: Expanded(
-                                        child: Text(
-                                          'STATUS',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  rows: scheduleData.map((data) {
-                                    return DataRow(cells: [
-                                      DataCell(Text(data.workOrderId)),
-                                      DataCell(Text(data.technicianAssigned)),
-                                      DataCell(Text(
-                                        data.scheduledDate != null
-                                            ? _formatDate(data.scheduledDate)
-                                            : 'Not scheduled',
-                                      )),
-                                      DataCell(Text(data.scheduledTime)),
-                                      DataCell(Text(data.estimatedHours)),
-                                      DataCell(
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: getStatusColor(data.status),
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            data.status,
-                                            style: const TextStyle(
-                                                color: Colors.white),
+                              controller: _verticalScrollController,
+                              scrollDirection: Axis.vertical,
+                              child: Scrollbar(
+                                controller: _horizontalScrollController,
+                                thumbVisibility: true,
+                                thickness: 8,
+                                radius: const Radius.circular(10),
+                                child: SingleChildScrollView(
+                                  controller: _horizontalScrollController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: Container(
+                                    width: usefullLayout
+                                        ? MediaQuery.sizeOf(context).width * 1.3
+                                        : 800,
+                                    margin: EdgeInsets.only(bottom: 15),
+                                    child: DataTable(
+                                      columnSpacing: 20,
+                                      horizontalMargin: 15,
+                                      headingTextStyle: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: tableTitle),
+                                      headingRowColor: WidgetStateProperty.all(
+                                          Color(0XFFE5E7EB)),
+                                      dataTextStyle:
+                                          TextStyle(fontSize: tableTitle),
+                                      headingRowHeight: tableRowHeight,
+                                      dataRowHeight: tableRowHeight,
+                                      columns: const [
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'WORK ORDER ID',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ]);
-                                  }).toList(),
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'TECHNICIAN ASSIGNED',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'SCHEDULED DATE',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'SCHEDULED TIME',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'ESTIMATED HOURS',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'STATUS',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                      rows: scheduleData.map((data) {
+                                        return DataRow(cells: [
+                                          DataCell(Text(data.workOrderId)),
+                                          DataCell(
+                                              Text(data.technicianAssigned)),
+                                          DataCell(Text(
+                                            data.scheduledDate != null
+                                                ? _formatDate(
+                                                    data.scheduledDate)
+                                                : 'Not scheduled',
+                                          )),
+                                          DataCell(Text(data.scheduledTime)),
+                                          DataCell(Text(data.estimatedHours)),
+                                          DataCell(
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    getStatusColor(data.status),
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                data.status,
+                                                style: const TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                            ),
+                                          ),
+                                        ]);
+                                      }).toList(),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),

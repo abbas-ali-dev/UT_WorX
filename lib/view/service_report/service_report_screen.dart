@@ -32,8 +32,25 @@ class _ServiceReportScreenState extends State<ServiceReportScreen> {
   }
 }
 
-class ServiceReportTable extends StatelessWidget {
+class ServiceReportTable extends StatefulWidget {
   const ServiceReportTable({super.key});
+
+  @override
+  State<ServiceReportTable> createState() => _ServiceReportTableState();
+}
+
+class _ServiceReportTableState extends State<ServiceReportTable> {
+  // Add scroll controllers
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  // Dispose controllers when widget is disposed
+  @override
+  void dispose() {
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,149 +165,165 @@ class ServiceReportTable extends StatelessWidget {
                   // Convert the preliminary reports to service report models
                   final prelimReports = snapshot.data!.docs;
 
+                  // Replace the existing Scrollbar with nested Scrollbars
                   return Scrollbar(
                     thumbVisibility: true,
+                    controller: _verticalScrollController,
                     thickness: 8,
+                    radius: const Radius.circular(10),
                     child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Container(
-                        width: usefullLayout
-                            ? MediaQuery.sizeOf(context).width * 1.3
-                            : 800,
-                        margin: EdgeInsets.only(bottom: 15),
-                        child: DataTable(
-                          columnSpacing: 20,
-                          horizontalMargin: 15,
-                          headingTextStyle: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: tableTitle),
-                          headingRowColor:
-                              WidgetStateProperty.all(Color(0XFFE5E7EB)),
-                          dataTextStyle: TextStyle(fontSize: tableTitle),
-                          headingRowHeight: tableRowHeight,
-                          dataRowHeight: tableRowHeight,
-                          columns: const [
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ORDER ID',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                      controller: _verticalScrollController,
+                      scrollDirection: Axis.vertical,
+                      child: Scrollbar(
+                        controller: _horizontalScrollController,
+                        thumbVisibility: true,
+                        thickness: 8,
+                        radius: const Radius.circular(10),
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Container(
+                            width: usefullLayout
+                                ? MediaQuery.sizeOf(context).width * 1.3
+                                : 800,
+                            margin: EdgeInsets.only(bottom: 15),
+                            child: DataTable(
+                              columnSpacing: 20,
+                              horizontalMargin: 15,
+                              headingTextStyle: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: tableTitle),
+                              headingRowColor:
+                                  WidgetStateProperty.all(Color(0XFFE5E7EB)),
+                              dataTextStyle: TextStyle(fontSize: tableTitle),
+                              headingRowHeight: tableRowHeight,
+                              dataRowHeight: tableRowHeight,
+                              columns: const [
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ORDER ID',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ORDER TITLE',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ORDER TITLE',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ASSET SELECTION',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ASSET SELECTION',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'FINDINGS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'FINDINGS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'CREATED BY',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'CREATED BY',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'STATUS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'STATUS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ACTIONS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ACTIONS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                          rows: prelimReports.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
+                              ],
+                              rows: prelimReports.map((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
 
-                            return DataRow(cells: [
-                              DataCell(Text(data['orderId'] ?? '')),
-                              DataCell(Text(data['orderTitle'] ?? '')),
-                              DataCell(Text(data['assetSelection'] ?? '')),
-                              DataCell(Text(data['findings'] ?? '')),
-                              DataCell(Text(data['createdBy'] ?? '')),
-                              DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: getStatusColor(
-                                        data['status'] ?? 'Pending'),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    data['status'] ?? 'Pending',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                                return DataRow(cells: [
+                                  DataCell(Text(data['orderId'] ?? '')),
+                                  DataCell(Text(data['orderTitle'] ?? '')),
+                                  DataCell(Text(data['assetSelection'] ?? '')),
+                                  DataCell(Text(data['findings'] ?? '')),
+                                  DataCell(Text(data['createdBy'] ?? '')),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: getStatusColor(
+                                            data['status'] ?? 'Pending'),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        data['status'] ?? 'Pending',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              DataCell(
-                                ElevatedButton(
-                                  onPressed: () {
-                                    _showCreateServiceReportDialog(
-                                        context, data);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0XFF7DBD2C),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    minimumSize: const Size(60, 25),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
+                                  DataCell(
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        _showCreateServiceReportDialog(
+                                            context, data);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0XFF7DBD2C),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        minimumSize: const Size(60, 25),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Create Report',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'Create Report',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ]);
-                          }).toList(),
+                                ]);
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ),

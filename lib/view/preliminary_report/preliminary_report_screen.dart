@@ -7,8 +7,26 @@ import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 
-class PreliminaryReportScreen extends StatelessWidget {
+class PreliminaryReportScreen extends StatefulWidget {
   const PreliminaryReportScreen({super.key});
+
+  @override
+  State<PreliminaryReportScreen> createState() =>
+      _PreliminaryReportScreenState();
+}
+
+class _PreliminaryReportScreenState extends State<PreliminaryReportScreen> {
+  // Add scroll controllers
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  // Dispose controllers when widget is disposed
+  @override
+  void dispose() {
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,176 +172,174 @@ class PreliminaryReportScreen extends StatelessWidget {
                     }).toList();
 
                     // Use your existing table UI with the fetched data
+                    // Replace the existing Scrollbar with nested Scrollbars
                     return Scrollbar(
                       thumbVisibility: true,
+                      controller: _verticalScrollController,
                       thickness: 8,
+                      radius: const Radius.circular(10),
                       child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Container(
-                          width: usefullLayout
-                              ? MediaQuery.sizeOf(context).width * 1.3
-                              : 800,
-                          margin: EdgeInsets.only(bottom: 15),
-                          child: DataTable(
-                            columnSpacing: 20,
-                            horizontalMargin: 15,
-                            headingTextStyle: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: tableTitle),
-                            headingRowColor:
-                                WidgetStateProperty.all(Color(0XFFE5E7EB)),
-                            dataTextStyle: TextStyle(fontSize: tableTitle),
-                            headingRowHeight: tableRowHeight,
-                            dataRowHeight: tableRowHeight,
-                            columns: const [
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'ORDER ID',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'ORDER TITLE',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'ASSET SELECTION',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'FINDINGS',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'FOLLOW UPS',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'CREATED BY',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                      child: Text(
-                                'STATUS',
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
-                              ))),
-                              DataColumn(
-                                  label: Expanded(
-                                child: Text(
-                                  'ACTIONS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                ),
-                              )),
-                            ],
-                            rows: reportData.map((data) {
-                              return DataRow(cells: [
-                                DataCell(Text(data.orderId)),
-                                DataCell(Text(data.orderTitle)),
-                                DataCell(Text(data.assetSelection)),
-                                DataCell(
-                                  // Row(
-                                  //   mainAxisSize: MainAxisSize.min,
-                                  //   mainAxisAlignment: MainAxisAlignment.center,
-                                  //   children: [
-                                  //     SizedBox(
-                                  //       width: 200,
-                                  // child:
-                                  Text(
-                                    data.findings,
-                                    maxLines: 3,
+                        controller: _verticalScrollController,
+                        scrollDirection: Axis.vertical,
+                        child: Scrollbar(
+                          controller: _horizontalScrollController,
+                          thumbVisibility: true,
+                          thickness: 8,
+                          radius: const Radius.circular(10),
+                          child: SingleChildScrollView(
+                            controller: _horizontalScrollController,
+                            scrollDirection: Axis.horizontal,
+                            child: Container(
+                              width: usefullLayout
+                                  ? MediaQuery.sizeOf(context).width * 1.3
+                                  : 800,
+                              margin: EdgeInsets.only(bottom: 15),
+                              child: DataTable(
+                                columnSpacing: 20,
+                                horizontalMargin: 15,
+                                headingTextStyle: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: tableTitle),
+                                headingRowColor:
+                                    WidgetStateProperty.all(Color(0XFFE5E7EB)),
+                                dataTextStyle: TextStyle(fontSize: tableTitle),
+                                headingRowHeight: tableRowHeight,
+                                dataRowHeight: tableRowHeight,
+                                columns: const [
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'ORDER ID',
                                     overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                // IconButton(
-                                //   padding: EdgeInsets.zero,
-                                //   icon: Icon(Icons.edit,
-                                //       size: 20, color: Color(0XFF7DBD2C)),
-                                //   onPressed: () {
-                                //     _showEditFindingsDialog(
-                                //         context, data);
-                                //   },
-                                // ),
-                                //     ],
-                                //   ),
-                                // ),
-                                DataCell(
-                                  Transform.scale(
-                                    scale: 0.7,
-                                    child: Switch(
-                                      value: data.followUps,
-                                      onChanged: (value) {
-                                        FirebaseFirestore.instance
-                                            .collection('PreliminaryReports')
-                                            .doc(data.orderId)
-                                            .update({
-                                          'followUps': true,
-                                        });
-                                      },
-                                      activeColor: Color(0XFF7DBD2C),
-                                    ),
-                                  ),
-                                ),
-                                DataCell(Text(data.createdBy)),
-                                DataCell(
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: getStatusColor(data.status),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'ORDER TITLE',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'ASSET SELECTION',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'FINDINGS',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'FOLLOW UPS',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'CREATED BY',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
+                                          child: Text(
+                                    'STATUS',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ))),
+                                  DataColumn(
+                                      label: Expanded(
                                     child: Text(
-                                      data.status,
-                                      style:
-                                          const TextStyle(color: Colors.white),
+                                      'ACTIONS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
-                                  ),
-                                ),
-                                DataCell(
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      _showPreliminaryReportDetailsDialog(
-                                          context, data);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0XFF7DBD2C),
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      minimumSize: Size(60, 25),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(5),
+                                  )),
+                                ],
+                                rows: reportData.map((data) {
+                                  return DataRow(cells: [
+                                    DataCell(Text(data.orderId)),
+                                    DataCell(Text(data.orderTitle)),
+                                    DataCell(Text(data.assetSelection)),
+                                    DataCell(
+                                      Text(
+                                        data.findings,
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                    child: Text(
-                                      'View',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
+                                    DataCell(
+                                      Transform.scale(
+                                        scale: 0.7,
+                                        child: Switch(
+                                          value: data.followUps,
+                                          onChanged: (value) {
+                                            FirebaseFirestore.instance
+                                                .collection(
+                                                    'PreliminaryReports')
+                                                .doc(data.orderId)
+                                                .update({
+                                              'followUps': true,
+                                            });
+                                          },
+                                          activeColor: Color(0XFF7DBD2C),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ]);
-                            }).toList(),
+                                    DataCell(Text(data.createdBy)),
+                                    DataCell(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: getStatusColor(data.status),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          data.status,
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                    DataCell(
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          _showPreliminaryReportDetailsDialog(
+                                              context, data);
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Color(0XFF7DBD2C),
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 4),
+                                          minimumSize: Size(60, 25),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'View',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ]);
+                                }).toList(),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -339,65 +355,6 @@ class PreliminaryReportScreen extends StatelessWidget {
   }
 
   // void _showEditFindingsDialog(BuildContext context, PreliminaryReport report) {
-  //   final TextEditingController findingsController =
-  //       TextEditingController(text: report.findings);
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         content: TextField(
-  //           controller: findingsController,
-  //           decoration: InputDecoration(
-  //             hintText: 'Enter findings',
-  //             border: OutlineInputBorder(),
-  //           ),
-  //           maxLines: 3,
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: Text(
-  //               'Cancel',
-  //               style: TextStyle(
-  //                 color: Color(0XFF7DBD2C),
-  //               ),
-  //             ),
-  //           ),
-  //           ElevatedButton(
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: Color(0XFF7DBD2C),
-  //             ),
-  //             onPressed: () async {
-  //               try {
-  //                 await FirebaseFirestore.instance
-  //                     .collection('PreliminaryReports')
-  //                     .doc(report.orderId)
-  //                     .update({
-  //                   'findings': findingsController.text,
-  //                 });
-
-  //                 Navigator.of(context).pop();
-
-  //                 Toaster.showToast('Findings updated successfully');
-  //               } catch (e) {
-  //                 Navigator.of(context).pop();
-  //                 Toaster.showToast('Failed to update findings');
-  //               }
-  //             },
-  //             child: Text(
-  //               'Save',
-  //               style: TextStyle(color: Colors.white),
-  //             ),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
   void _showPreliminaryReportDetailsDialog(
       BuildContext context, PreliminaryReport notification) {
     showDialog(

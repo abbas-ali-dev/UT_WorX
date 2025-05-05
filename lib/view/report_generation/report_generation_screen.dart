@@ -36,6 +36,18 @@ class ReportGenerator extends StatefulWidget {
 
 class _ReportGeneratorState extends State<ReportGenerator> {
   DateTime? selectedDate;
+  // Add scroll controllers
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
+
+  // Dispose controllers when widget is disposed
+  @override
+  void dispose() {
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return ResponsiveLayout(
@@ -258,143 +270,160 @@ class _ReportGeneratorState extends State<ReportGenerator> {
                           doc.data() as Map<String, dynamic>))
                       .toList();
 
+                  // Replace the existing Scrollbar with nested Scrollbars
                   return Scrollbar(
                     thumbVisibility: true,
+                    controller: _verticalScrollController,
                     thickness: 8,
+                    radius: const Radius.circular(10),
                     child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Container(
-                        width: usefullLayout
-                            ? MediaQuery.sizeOf(context).width * 1.3
-                            : 800,
-                        margin: EdgeInsets.only(bottom: 15),
-                        child: DataTable(
-                          columnSpacing: 20,
-                          horizontalMargin: 15,
-                          headingTextStyle: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: tableTitle),
-                          headingRowColor:
-                              WidgetStateProperty.all(Color(0XFFE5E7EB)),
-                          dataTextStyle: TextStyle(fontSize: tableTitle),
-                          headingRowHeight: tableRowHeight,
-                          // ignore: deprecated_member_use
-                          dataRowHeight: tableRowHeight,
-                          columns: const [
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ORDER ID',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                      controller: _verticalScrollController,
+                      scrollDirection: Axis.vertical,
+                      child: Scrollbar(
+                        controller: _horizontalScrollController,
+                        thumbVisibility: true,
+                        thickness: 8,
+                        radius: const Radius.circular(10),
+                        child: SingleChildScrollView(
+                          controller: _horizontalScrollController,
+                          scrollDirection: Axis.horizontal,
+                          child: Container(
+                            width: usefullLayout
+                                ? MediaQuery.sizeOf(context).width * 1.3
+                                : 800,
+                            margin: EdgeInsets.only(bottom: 15),
+                            child: DataTable(
+                              columnSpacing: 20,
+                              horizontalMargin: 15,
+                              headingTextStyle: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: tableTitle),
+                              headingRowColor:
+                                  WidgetStateProperty.all(Color(0XFFE5E7EB)),
+                              dataTextStyle: TextStyle(fontSize: tableTitle),
+                              headingRowHeight: tableRowHeight,
+                              // ignore: deprecated_member_use
+                              dataRowHeight: tableRowHeight,
+                              columns: const [
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ORDER ID',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ORDER TITLE',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ORDER TITLE',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'FOLLOW UPS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'FOLLOW UPS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'COMPLETION DATE',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'COMPLETION DATE',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'STATUS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'STATUS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            DataColumn(
-                              label: Expanded(
-                                child: Text(
-                                  'ACTIONS',
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                DataColumn(
+                                  label: Expanded(
+                                    child: Text(
+                                      'ACTIONS',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ],
-                          rows: reports.map((report) {
-                            // Format the createdAt timestamp
-                            String formattedDate = 'N/A';
-                            if (report.createdAt != null) {
-                              formattedDate = DateFormat('dd/MM/yyyy')
-                                  .format(report.createdAt!);
-                            }
+                              ],
+                              rows: reports.map((report) {
+                                // Format the createdAt timestamp
+                                String formattedDate = 'N/A';
+                                if (report.createdAt != null) {
+                                  formattedDate = DateFormat('dd/MM/yyyy')
+                                      .format(report.createdAt!);
+                                }
 
-                            return DataRow(cells: [
-                              DataCell(Text(report.orderId)),
-                              DataCell(Text(report.orderTitle)),
-                              DataCell(Text(report.followUps.toString())),
-                              DataCell(Text(formattedDate)),
-                              DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: getStatusColor(report.status),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    report.status,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
+                                return DataRow(cells: [
+                                  DataCell(Text(report.orderId)),
+                                  DataCell(Text(report.orderTitle)),
+                                  DataCell(Text(report.followUps.toString())),
+                                  DataCell(Text(formattedDate)),
+                                  DataCell(
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: getStatusColor(report.status),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        report.status,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              DataCell(
-                                ElevatedButton(
-                                  onPressed: () {
-                                    _showReportDetailsDialog(context, report);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0XFF7DBD2C),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    minimumSize: const Size(60, 25),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(5),
+                                  DataCell(
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        _showReportDetailsDialog(
+                                            context, report);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor:
+                                            const Color(0XFF7DBD2C),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        minimumSize: const Size(60, 25),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'View',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                  child: const Text(
-                                    'View',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ]);
-                          }).toList(),
+                                ]);
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ),
