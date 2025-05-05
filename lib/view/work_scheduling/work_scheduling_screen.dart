@@ -287,7 +287,7 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
                                         DataColumn(
                                           label: Expanded(
                                             child: Text(
-                                              'TECHNICIAN ASSIGNED',
+                                              'ASSIGNED PIC',
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
                                             ),

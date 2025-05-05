@@ -30,6 +30,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
   String? selectedTechnician;
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+  String? selectedSparePart; // Changed to String type
 
   // Lists for dropdowns
   final List<String> technicians = [
@@ -88,6 +89,12 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
       return;
     }
 
+    // Add this validation
+    if (selectedSparePart == null || selectedSparePart!.isEmpty) {
+      Toaster.showToast('Please select a spare part');
+      return;
+    }
+
     // Show loading indicator
     EasyLoading.show(status: 'Creating work schedule...');
 
@@ -103,6 +110,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
         'scheduledTime': _formatTimeWithAmPm(selectedTime!),
         'estimatedHours': _estimatedHoursController.text,
         'status': 'Scheduled', // Default status
+        'sparePart': selectedSparePart,
         'createdBy': userId,
         'createdAt': FieldValue.serverTimestamp(),
       };
@@ -193,6 +201,22 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
         .padLeft(2, '0'); // Ensure minutes have leading zero
     final period = time.period == DayPeriod.am ? 'AM' : 'PM';
     return '$hour:$minute $period';
+  }
+
+  // Helper method to get enum values as strings
+  List<String> getSparePartValues() {
+    return SparePart.values
+        .map((part) => part.toString().split('.').last)
+        .toList();
+  }
+
+  // Helper method to convert string back to enum
+  SparePart? getSparePartFromString(String? value) {
+    if (value == null) return null;
+    return SparePart.values.firstWhere(
+      (part) => part.toString().split('.').last == value,
+      orElse: () => SparePart.values.first,
+    );
   }
 
   @override
@@ -291,7 +315,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
 
                   // Technician Assignment
                   Text(
-                    'Assign Technician',
+                    'Assign PIC',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: labelFontSize,
@@ -301,7 +325,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                   DropdownButtonFormField<String>(
                     value: selectedTechnician,
                     decoration: InputDecoration(
-                      hintText: 'Select Technician',
+                      hintText: 'Select PIC',
                       hintStyle: TextStyle(color: Colors.grey),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -437,6 +461,50 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                         vertical: 8,
                       ),
                     ),
+                  ),
+                  SizedBox(height: verticalSpacing * 2),
+
+                  // Spare Part Selection
+                  Text(
+                    'Spare Part',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: labelFontSize,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  DropdownButtonFormField<String>(
+                    value: selectedSparePart,
+                    decoration: InputDecoration(
+                      hintText: 'Select Spare Part',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Color(0XFFE5E7EB), width: 1)),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    dropdownColor: Colors.white,
+                    icon: Icon(Icons.arrow_drop_down_outlined),
+                    isExpanded: true,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedSparePart = newValue;
+                      });
+                    },
+                    items: getSparePartValues()
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        // Display the value with spaces instead of underscores
+                        child: Text(value.replaceAll('_', ' ')),
+                      );
+                    }).toList(),
                   ),
                   SizedBox(height: verticalSpacing * 2),
 
