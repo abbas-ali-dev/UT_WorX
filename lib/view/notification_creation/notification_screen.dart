@@ -9,6 +9,7 @@ import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 import 'package:ut_worx/view/notification_creation/create_notification.dart';
+import 'package:ut_worx/view/notification_creation/generate_report.dart';
 
 class NotificationListScreen extends StatefulWidget {
   final String searchQuery;
@@ -324,6 +325,14 @@ class _NotificationTableState extends State<NotificationTable> {
                                     maxLines: 1,
                                   ),
                                 )),
+                                DataColumn(
+                                    label: Expanded(
+                                  child: Text(
+                                    'GENERATE REPORT',
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                )),
                               ],
                               rows: notificationData.map((data) {
                                 return DataRow(cells: [
@@ -373,6 +382,30 @@ class _NotificationTableState extends State<NotificationTable> {
                                       ),
                                       child: Text(
                                         'View',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        showGenerateReportDialog(context, data);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.blue,
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        minimumSize: Size(60, 25),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Generate Report',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 12,

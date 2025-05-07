@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:ut_worx/constant/toaster.dart';
@@ -34,6 +35,8 @@ class MyTaskContent extends StatefulWidget {
 }
 
 class _MyTaskContentState extends State<MyTaskContent> {
+  final _user = FirebaseAuth.instance.currentUser;
+
   DateTime? selectedDate;
   // Add scroll controllers
   final ScrollController _verticalScrollController = ScrollController();
@@ -201,7 +204,8 @@ class _MyTaskContentState extends State<MyTaskContent> {
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('WorkScheduling')
-                    .orderBy('createdAt', descending: true)
+                    // .orderBy('createdAt', descending: true)
+                    .where('technicianAssigned', isEqualTo: _user!.email)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {

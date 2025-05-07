@@ -30,20 +30,26 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
   String? selectedTechnician;
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
-  String? selectedSparePart; // Changed to String type
+  String? selectedSparePart;
 
   // Lists for dropdowns
-  final List<String> technicians = [
-    'John Doe',
-    'Jane Smith',
-    'Robert Johnson',
-    'Emily Davis',
-    'Michael Wilson'
-  ];
+  List<dynamic> technicians = [];
 
   @override
   void initState() {
     super.initState();
+
+    loadData();
+  }
+
+  Future<void> loadData() async {
+    // Load technicians from Firebase
+    final techniciansSnapshot =
+        await FirebaseFirestore.instance.collection('Users').get();
+    setState(() {
+      technicians =
+          techniciansSnapshot.docs.map((doc) => doc.data()['email']).toList();
+    });
 
     // Set default values
     selectedDate = DateTime.now().add(const Duration(days: 1));
@@ -347,7 +353,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                       });
                     },
                     items: technicians
-                        .map<DropdownMenuItem<String>>((String value) {
+                        .map<DropdownMenuItem<String>>((dynamic value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(value),

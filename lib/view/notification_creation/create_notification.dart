@@ -119,19 +119,19 @@ class _NotificationDialogState extends State<NotificationDialog> {
       };
 
       // Create preliminary report data
-      final Map<String, dynamic> preliminaryReportData = {
-        'orderId': orderId,
-        'orderTitle': _titleController.text,
-        'findings': null,
-        'assetSelection': _assetController.text,
-        'followUps': false,
-        'createdBy': userEmail,
-        'createdAt': FieldValue.serverTimestamp(),
-        'status': 'Pending', // Default status
-        // Add the base64 image if available
-        'imageData': _base64Image,
-        'imageName': _imageName,
-      };
+      // final Map<String, dynamic> preliminaryReportData = {
+      //   'orderId': orderId,
+      //   'orderTitle': _titleController.text,
+      //   'findings': null,
+      //   'assetSelection': _assetController.text,
+      //   'followUps': false,
+      //   'createdBy': userEmail,
+      //   'createdAt': FieldValue.serverTimestamp(),
+      //   'status': 'Pending', // Default status
+      //   // Add the base64 image if available
+      //   'imageData': _base64Image,
+      //   'imageName': _imageName,
+      // };
 
       // Save to Firebase
       await FirebaseFirestore.instance
@@ -139,10 +139,10 @@ class _NotificationDialogState extends State<NotificationDialog> {
           .doc(orderId)
           .set(notificationData);
 
-      await FirebaseFirestore.instance
-          .collection('PreliminaryReports')
-          .doc(orderId)
-          .set(preliminaryReportData);
+      // await FirebaseFirestore.instance
+      //     .collection('PreliminaryReports')
+      //     .doc(orderId)
+      //     .set(preliminaryReportData);
 
       // Hide loading indicator
       EasyLoading.dismiss();
