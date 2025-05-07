@@ -6,10 +6,12 @@ Color getStatusColor(String status) {
       return Colors.green.shade400;
     case 'Pending':
       return Colors.yellow.shade700;
+    case 'In Progress':
+      return Colors.blue.shade400;
     case 'Rejected':
       return Colors.red.shade400;
     case 'OnHold':
-      return Colors.blue.shade400;
+      return const Color.fromARGB(255, 33, 238, 241);
     default:
       return Colors.grey;
   }

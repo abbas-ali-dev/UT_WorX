@@ -102,35 +102,72 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
     }
 
     // Show loading indicator
-    EasyLoading.show(status: 'Creating work schedule...');
+    EasyLoading.show(status: 'Creating work schedules...');
 
     try {
       // Get current user ID
       final String userId = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
 
-      // Create work scheduling data
-      final Map<String, dynamic> workSchedulingData = {
-        'workOrderId': _workOrderIdController.text,
-        'technicianAssigned': selectedTechnician,
-        'scheduledDate': Timestamp.fromDate(selectedDate!),
-        'scheduledTime': _formatTimeWithAmPm(selectedTime!),
-        'estimatedHours': _estimatedHoursController.text,
-        'status': 'Scheduled', // Default status
-        'sparePart': selectedSparePart,
-        'createdBy': userId,
-        'createdAt': FieldValue.serverTimestamp(),
-      };
+      // Get current date (without time)
+      final DateTime currentDate = DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+      );
 
-      // Save to Firebase
-      await FirebaseFirestore.instance
-          .collection('WorkScheduling')
-          .doc(_workOrderIdController.text)
-          .set(workSchedulingData);
+      // Get selected date (without time)
+      final DateTime targetDate = DateTime(
+        selectedDate!.year,
+        selectedDate!.month,
+        selectedDate!.day,
+      );
+
+      // Calculate difference in days
+      final int daysDifference = targetDate.difference(currentDate).inDays;
+
+      // Create a batch to perform multiple writes
+      final batch = FirebaseFirestore.instance.batch();
+
+      // Create work orders for each day from current date to selected date (inclusive)
+      for (int i = 0; i <= daysDifference; i++) {
+        // Calculate the date for this work order
+        final DateTime orderDate = currentDate.add(Duration(days: i));
+
+        // Create a unique ID for each work order
+        final String workOrderId = i == 0
+            ? _workOrderIdController.text
+            : '${_workOrderIdController.text}_$i';
+
+        // Create work scheduling data
+        final Map<String, dynamic> workSchedulingData = {
+          'workOrderId': workOrderId,
+          'technicianAssigned': selectedTechnician,
+          'scheduledDate': Timestamp.fromDate(orderDate),
+          'scheduledTime': _formatTimeWithAmPm(selectedTime!),
+          'estimatedHours': _estimatedHoursController.text,
+          'status': 'Scheduled', // Default status
+          'sparePart': selectedSparePart,
+          'createdBy': userId,
+          'createdAt': FieldValue.serverTimestamp(),
+        };
+
+        // Add to batch
+        final docRef = FirebaseFirestore.instance
+            .collection('WorkScheduling')
+            .doc(workOrderId);
+        batch.set(docRef, workSchedulingData);
+      }
+
+      // Commit the batch
+      await batch.commit();
 
       // Hide loading indicator
       EasyLoading.dismiss();
 
-      Toaster.showToast('Work schedule created successfully');
+      final String message = daysDifference > 0
+          ? '${daysDifference + 1} work schedules created successfully'
+          : 'Work schedule created successfully';
+      Toaster.showToast(message);
 
       if (mounted) {
         Navigator.of(context).pop(true);
@@ -138,7 +175,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
     } catch (e) {
       EasyLoading.dismiss();
       Toaster.showToast('Error: ${e.toString()}');
-      debugPrint('Error creating work schedule: $e');
+      debugPrint('Error creating work schedules: $e');
     }
   }
 

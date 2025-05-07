@@ -354,13 +354,18 @@ class _MyTaskContentState extends State<MyTaskContent> {
                                   ),
                                   DataCell(
                                     data['status'] == 'Completed'
-                                        ? Text('Done')
+                                        ? Text(
+                                            'Done',
+                                            style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold),
+                                          )
                                         : PopupMenuButton<String>(
                                             color: Color(0XFF7DBD2C),
                                             icon: Icon(Icons.more_vert,
                                                 color: Colors.grey),
                                             onSelected: (String value) async {
-                                              if (value == 'complete') {
+                                              if (value == 'completed') {
                                                 // Update the status to 'Completed' in Firestore
                                                 await FirebaseFirestore.instance
                                                     .collection(
@@ -372,15 +377,35 @@ class _MyTaskContentState extends State<MyTaskContent> {
 
                                                 Toaster.showToast(
                                                     'Task completed');
+                                              } else if (value == 'start') {
+                                                // Update the status to 'In Progress' in Firestore
+                                                await FirebaseFirestore.instance
+                                                    .collection(
+                                                        'WorkScheduling')
+                                                    .doc(doc.id)
+                                                    .update({
+                                                  'status': 'In Progress'
+                                                });
+
+                                                Toaster.showToast(
+                                                    'Task started');
                                               }
                                             },
                                             itemBuilder:
                                                 (BuildContext context) =>
                                                     <PopupMenuEntry<String>>[
                                               const PopupMenuItem<String>(
-                                                value: 'complete',
+                                                value: 'start',
                                                 child: Text(
-                                                  'Mark as completed',
+                                                  'Start',
+                                                  style: TextStyle(
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                              const PopupMenuItem<String>(
+                                                value: 'completed',
+                                                child: Text(
+                                                  'Completed',
                                                   style: TextStyle(
                                                       color: Colors.white),
                                                 ),
