@@ -50,6 +50,46 @@ class _NotificationDialogState extends State<NotificationDialog> {
   String? _imageName;
   bool _isImageSelected = false;
 
+  final Map<String, List<String>> _hardcodedData = {
+    'L1': [
+      'L1 Item 1: Equipment details',
+      'L1 Item 2: Maintenance history',
+      'L1 Item 3: Last service date'
+    ],
+    'L2': [
+      'L2 Item 1: Component information',
+      'L2 Item 2: Installation date',
+      'L2 Item 3: Warranty status'
+    ],
+    'L3': [
+      'L3 Item 1: Technical specifications',
+      'L3 Item 2: Operating parameters',
+      'L3 Item 3: Performance metrics'
+    ],
+    'L4': [
+      'L4 Item 1: Safety guidelines',
+      'L4 Item 2: Inspection records',
+      'L4 Item 3: Compliance status'
+    ],
+    'L5': [
+      'L5 Item 1: Spare parts inventory',
+      'L5 Item 2: Supplier contacts',
+      'L5 Item 3: Ordering information'
+    ],
+    'L6': [
+      'L6 Item 1: Troubleshooting steps',
+      'L6 Item 2: Common issues',
+      'L6 Item 3: Resolution procedures'
+    ],
+  };
+
+  List<bool> _expandedItems = [];
+  @override
+  void initState() {
+    super.initState();
+    _expandedItems = List<bool>.filled(_hardcodedData.length, false);
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -230,6 +270,11 @@ class _NotificationDialogState extends State<NotificationDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final List<String> expandedLabels = [
+      'Label 1',
+      'Label 2',
+      'Label 3'
+    ]; // Added definition
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -355,46 +400,6 @@ class _NotificationDialogState extends State<NotificationDialog> {
                     ),
                     autovalidateMode: AutovalidateMode.always,
                   ),
-                  SizedBox(height: verticalSpacing),
-                  // Text(
-                  //   'Prelim Finding',
-                  //   style: TextStyle(
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: labelFontSize,
-                  //   ),
-                  // ),
-                  // const SizedBox(height: 5),
-                  // TextFormField(
-                  //   controller: _prelimFindingController,
-                  //   maxLines: responsive.deviceValue(
-                  //     mobile: 2,
-                  //     tablet: 3,
-                  //     desktop: 3,
-                  //   ),
-                  //   decoration: InputDecoration(
-                  //     hintText: 'Please add prelim finding',
-                  //     hintStyle: TextStyle(color: Colors.grey),
-                  //     focusedBorder: OutlineInputBorder(
-                  //         borderRadius: BorderRadius.circular(10),
-                  //         borderSide:
-                  //             BorderSide(color: Color(0XFFE5E7EB), width: 1)),
-                  //     enabledBorder: OutlineInputBorder(
-                  //         borderRadius: BorderRadius.circular(10),
-                  //         borderSide:
-                  //             BorderSide(color: Color(0XFFE5E7EB), width: 1)),
-                  //     filled: true,
-                  //     fillColor: Colors.white,
-                  //     contentPadding: EdgeInsets.symmetric(
-                  //       horizontal: 12,
-                  //       vertical: responsive.deviceValue(
-                  //         mobile: 8.0,
-                  //         tablet: 10.0,
-                  //         desktop: 12.0,
-                  //       ),
-                  //     ),
-                  //   ),
-                  //   autovalidateMode: AutovalidateMode.always,
-                  // ),
                   SizedBox(height: verticalSpacing),
                   Text(
                     'Asset Selection',
@@ -584,7 +589,53 @@ class _NotificationDialogState extends State<NotificationDialog> {
                       ),
                     ],
                   ),
-
+                  ExpansionPanelList(
+                    elevation: 2,
+                    expandedHeaderPadding: EdgeInsets.zero,
+                    dividerColor: Colors.grey[300],
+                    expansionCallback: (int index, bool isExpanded) {
+                      setState(() {
+                        _expandedItems[index] = !_expandedItems[index];
+                      });
+                    },
+                    children: expandedLabels
+                        .asMap()
+                        .entries
+                        .map<ExpansionPanel>((entry) {
+                      int idx = entry.key;
+                      String label = entry.value;
+                      return ExpansionPanel(
+                        backgroundColor: Colors.white,
+                        canTapOnHeader: true,
+                        headerBuilder: (BuildContext context, bool isExpanded) {
+                          return ListTile(
+                            title: Text(
+                              label,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          );
+                        },
+                        body: Container(
+                          width: double.infinity,
+                          color: Colors.white,
+                          padding: EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: _hardcodedData.containsKey(label)
+                                ? _hardcodedData[label]!.map((item) {
+                                    return Padding(
+                                      padding:
+                                          const EdgeInsets.only(bottom: 8.0),
+                                      child: Text(item),
+                                    );
+                                  }).toList()
+                                : [Text("No data available for $label")],
+                          ),
+                        ),
+                        isExpanded: _expandedItems[idx],
+                      );
+                    }).toList(),
+                  ),
                   SizedBox(height: verticalSpacing * 2),
                   // Use column for mobile, row for tablet and desktop
                   responsive.isMobile
