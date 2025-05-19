@@ -49,6 +49,12 @@ class _NotificationDialogState extends State<NotificationDialog> {
   String? _base64Image;
   String? _imageName;
   bool _isImageSelected = false;
+  bool _isL1Expanded = false;
+  bool _isL2Expanded = false;
+  bool _isL3Expanded = false;
+  bool _isL4Expanded = false;
+  bool _isL5Expanded = false;
+  bool _isL6Expanded = false;
 
   final Map<String, List<String>> _hardcodedData = {
     'L1': [
@@ -589,52 +595,268 @@ class _NotificationDialogState extends State<NotificationDialog> {
                       ),
                     ],
                   ),
-                  ExpansionPanelList(
-                    elevation: 2,
-                    expandedHeaderPadding: EdgeInsets.zero,
-                    dividerColor: Colors.grey[300],
-                    expansionCallback: (int index, bool isExpanded) {
-                      setState(() {
-                        _expandedItems[index] = !_expandedItems[index];
-                      });
-                    },
-                    children: expandedLabels
-                        .asMap()
-                        .entries
-                        .map<ExpansionPanel>((entry) {
-                      int idx = entry.key;
-                      String label = entry.value;
-                      return ExpansionPanel(
-                        backgroundColor: Colors.white,
-                        canTapOnHeader: true,
-                        headerBuilder: (BuildContext context, bool isExpanded) {
-                          return ListTile(
-                            title: Text(
-                              label,
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          );
-                        },
-                        body: Container(
-                          width: double.infinity,
-                          color: Colors.white,
-                          padding: EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: _hardcodedData.containsKey(label)
-                                ? _hardcodedData[label]!.map((item) {
-                                    return Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 8.0),
-                                      child: Text(item),
-                                    );
-                                  }).toList()
-                                : [Text("No data available for $label")],
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        // Level 1
+                        ExpansionTile(
+                          title: Text(
+                            'L1',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
+                          initiallyExpanded: _isL1Expanded,
+                          onExpansionChanged: (expanded) {
+                            setState(() {
+                              _isL1Expanded = expanded;
+                            });
+                          },
+                          children: [
+                            // L1 content
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 16.0, right: 16.0, bottom: 8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _hardcodedData['L1']!.map((item) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 8.0),
+                                    child: Text(item),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+
+                            // Level 2
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: ExpansionTile(
+                                title: Text(
+                                  'L2',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                initiallyExpanded: _isL2Expanded,
+                                onExpansionChanged: (expanded) {
+                                  setState(() {
+                                    _isL2Expanded = expanded;
+                                  });
+                                },
+                                children: [
+                                  // L2 content
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 16.0, right: 16.0, bottom: 8.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children:
+                                          _hardcodedData['L2']!.map((item) {
+                                        return Padding(
+                                          padding: const EdgeInsets.only(
+                                              bottom: 8.0),
+                                          child: Text(item),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+
+                                  // Level 3
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 16.0),
+                                    child: ExpansionTile(
+                                      title: Text(
+                                        'L3',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      initiallyExpanded: _isL3Expanded,
+                                      onExpansionChanged: (expanded) {
+                                        setState(() {
+                                          _isL3Expanded = expanded;
+                                        });
+                                      },
+                                      children: [
+                                        // L3 content
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              left: 16.0,
+                                              right: 16.0,
+                                              bottom: 8.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: _hardcodedData['L3']!
+                                                .map((item) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                    bottom: 8.0),
+                                                child: Text(item),
+                                              );
+                                            }).toList(),
+                                          ),
+                                        ),
+
+                                        // Level 4
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 16.0),
+                                          child: ExpansionTile(
+                                            title: Text(
+                                              'L4',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
+                                            initiallyExpanded: _isL4Expanded,
+                                            onExpansionChanged: (expanded) {
+                                              setState(() {
+                                                _isL4Expanded = expanded;
+                                              });
+                                            },
+                                            children: [
+                                              // L4 content
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 16.0,
+                                                    right: 16.0,
+                                                    bottom: 8.0),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children:
+                                                      _hardcodedData['L4']!
+                                                          .map((item) {
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              bottom: 8.0),
+                                                      child: Text(item),
+                                                    );
+                                                  }).toList(),
+                                                ),
+                                              ),
+
+                                              // Level 5
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 16.0),
+                                                child: ExpansionTile(
+                                                  title: Text(
+                                                    'L5',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  initiallyExpanded:
+                                                      _isL5Expanded,
+                                                  onExpansionChanged:
+                                                      (expanded) {
+                                                    setState(() {
+                                                      _isL5Expanded = expanded;
+                                                    });
+                                                  },
+                                                  children: [
+                                                    // L5 content
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 16.0,
+                                                              right: 16.0,
+                                                              bottom: 8.0),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children:
+                                                            _hardcodedData[
+                                                                    'L5']!
+                                                                .map((item) {
+                                                          return Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    bottom:
+                                                                        8.0),
+                                                            child: Text(item),
+                                                          );
+                                                        }).toList(),
+                                                      ),
+                                                    ),
+
+                                                    // Level 6
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 16.0),
+                                                      child: ExpansionTile(
+                                                        title: Text(
+                                                          'L6',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        initiallyExpanded:
+                                                            _isL6Expanded,
+                                                        onExpansionChanged:
+                                                            (expanded) {
+                                                          setState(() {
+                                                            _isL6Expanded =
+                                                                expanded;
+                                                          });
+                                                        },
+                                                        children: [
+                                                          // L6 content
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .only(
+                                                                    left: 16.0,
+                                                                    right: 16.0,
+                                                                    bottom:
+                                                                        8.0),
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children:
+                                                                  _hardcodedData[
+                                                                          'L6']!
+                                                                      .map(
+                                                                          (item) {
+                                                                return Padding(
+                                                                  padding:
+                                                                      const EdgeInsets
+                                                                          .only(
+                                                                          bottom:
+                                                                              8.0),
+                                                                  child: Text(
+                                                                      item),
+                                                                );
+                                                              }).toList(),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        isExpanded: _expandedItems[idx],
-                      );
-                    }).toList(),
+                      ],
+                    ),
                   ),
                   SizedBox(height: verticalSpacing * 2),
                   // Use column for mobile, row for tablet and desktop
