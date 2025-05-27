@@ -3,39 +3,48 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class WorkSchedulingModel {
   final String workOrderId;
   final String technicianAssigned;
-  final DateTime scheduledDate;
+  final DateTime? scheduledDate;
   final String scheduledTime;
   final String estimatedHours;
   final String status;
-  final String? createdBy;
+  final List<dynamic>? spareParts;
+  final String createdBy;
   final DateTime? createdAt;
 
   WorkSchedulingModel({
     required this.workOrderId,
     required this.technicianAssigned,
-    required this.scheduledDate,
+    this.scheduledDate,
     required this.scheduledTime,
     required this.estimatedHours,
     required this.status,
-    this.createdBy,
+    this.spareParts,
+    required this.createdBy,
     this.createdAt,
   });
 
   // Firebase سے ڈیٹا حاصل کرنے کے لیے
   factory WorkSchedulingModel.fromJson(Map<String, dynamic> json) {
+    DateTime? scheduledDate;
+    if (json['scheduledDate'] != null) {
+      scheduledDate = (json['scheduledDate'] as Timestamp).toDate();
+    }
+
+    DateTime? createdAt;
+    if (json['createdAt'] != null) {
+      createdAt = (json['createdAt'] as Timestamp).toDate();
+    }
+
     return WorkSchedulingModel(
       workOrderId: json['workOrderId'] ?? '',
       technicianAssigned: json['technicianAssigned'] ?? '',
-      scheduledDate: json['scheduledDate'] != null
-          ? (json['scheduledDate'] as Timestamp).toDate()
-          : DateTime.now(),
+      scheduledDate: scheduledDate,
       scheduledTime: json['scheduledTime'] ?? '',
       estimatedHours: json['estimatedHours'] ?? '',
-      status: json['status'] ?? 'Scheduled',
-      createdBy: json['createdBy'],
-      createdAt: json['createdAt'] != null
-          ? (json['createdAt'] as Timestamp).toDate()
-          : null,
+      status: json['status'] ?? 'Pending',
+      spareParts: json['spareParts'] as List<dynamic>?,
+      createdBy: json['createdBy'] ?? '',
+      createdAt: createdAt,
     );
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:ut_worx/firebase_models/fb_preliminary_report_model.dart';
@@ -709,17 +710,15 @@ class _PreliminaryReportScreenState extends State<PreliminaryReportScreen> {
                         ),
                         SizedBox(width: 10),
                         ElevatedButton(
-                          onPressed: () {
+                          onPressed: () async {
                             // Update both followUps and findings in Firestore
-                            FirebaseFirestore.instance
-                                .collection('PreliminaryReports')
-                                .doc(report.orderId)
-                                .update({
-                              'followUps': true,
-                              'findings': findingsController.text,
-                            });
 
-                            Navigator.of(context).pop();
+                            await _updateFollowUpStatus(
+                                report.orderId, true, findingsController.text);
+
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0XFF7DBD2C),
@@ -730,7 +729,7 @@ class _PreliminaryReportScreenState extends State<PreliminaryReportScreen> {
                             ),
                           ),
                           child: Text(
-                            'OK',
+                            'Update',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: contentFontSize,
@@ -747,5 +746,67 @@ class _PreliminaryReportScreenState extends State<PreliminaryReportScreen> {
         );
       },
     );
+  }
+
+  Future<void> _updateFollowUpStatus(
+      String orderId, bool followUpStatus, String findings) async {
+    try {
+      // Show loading
+      EasyLoading.show(status: 'Updating...');
+
+      // Find the document with matching orderId
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('PreliminaryReports')
+          .where('orderId', isEqualTo: orderId)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Update the first matching document
+        final docId = querySnapshot.docs.first.id;
+
+        await FirebaseFirestore.instance
+            .collection('PreliminaryReports')
+            .doc(docId)
+            .update({
+          'followUps': followUpStatus,
+          'findings': findings,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        EasyLoading.dismiss();
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(followUpStatus
+                  ? 'Follow-up activated successfully'
+                  : 'Follow-up deactivated successfully'),
+              backgroundColor: Color(0XFF7DBD2C),
+            ),
+          );
+        }
+      } else {
+        EasyLoading.dismiss();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Report not found'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating follow-up: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      debugPrint('Error updating follow-up status: $e');
+    }
   }
 }
