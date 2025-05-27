@@ -328,7 +328,7 @@ class _NotificationTableState extends State<NotificationTable> {
                                 DataColumn(
                                     label: Expanded(
                                   child: Text(
-                                    'GENERATE REPORT',
+                                    'PRELIMINARY REPORT',
                                     overflow: TextOverflow.ellipsis,
                                     maxLines: 1,
                                   ),
@@ -405,7 +405,7 @@ class _NotificationTableState extends State<NotificationTable> {
                                         ),
                                       ),
                                       child: Text(
-                                        'Generate Report',
+                                        'Create Report',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 12,

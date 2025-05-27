@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:ut_worx/constant/toaster.dart';
@@ -7,13 +8,16 @@ import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
 
 void showGenerateReportDialog(
     BuildContext context, NotificationModel notification) {
+  final userId = FirebaseAuth.instance.currentUser!.uid;
   // Controllers for the text fields
   final TextEditingController prelimFindingController = TextEditingController();
   final TextEditingController faultyComponentsController =
       TextEditingController();
   final TextEditingController immediateActionController =
       TextEditingController();
-  final TextEditingController reportByController = TextEditingController();
+  final TextEditingController reportByController = TextEditingController(
+    text: userId,
+  );
   final TextEditingController prelimReportIdController =
       TextEditingController(text: 'PR-${notification.orderId}');
 
