@@ -5,9 +5,10 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/firebase_models/fb_notification_model.dart';
 import 'package:ut_worx/utils/resposive_design/responsive_layout.dart';
+import 'package:ut_worx/view/notification_creation/notification_screen.dart';
 
-void showGenerateReportDialog(
-    BuildContext context, NotificationModel notification) {
+Future<bool?> showGenerateReportDialog(
+    BuildContext context, NotificationModel notification) async {
   final userId = FirebaseAuth.instance.currentUser!.uid;
   // Controllers for the text fields
   final TextEditingController prelimFindingController = TextEditingController();
@@ -25,7 +26,7 @@ void showGenerateReportDialog(
   DateTime selectedDate = DateTime.now();
   ValueNotifier<bool> requiredFollowUp = ValueNotifier<bool>(false);
 
-  showDialog(
+  return showDialog<bool>(
     context: context,
     builder: (BuildContext context) {
       return Dialog(
@@ -257,7 +258,7 @@ void showGenerateReportDialog(
                       children: [
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).pop();
+                            Navigator.of(context).pop(false);
                           },
                           child: Text(
                             'Cancel',
@@ -270,18 +271,21 @@ void showGenerateReportDialog(
                         SizedBox(width: 10),
                         ElevatedButton(
                           onPressed: () async {
-                            // Create preliminary report
-                            _createPreliminaryReport(
+                            final success = await _createPreliminaryReport(
                               context,
                               notification,
                               prelimFindingController.text,
                               faultyComponentsController.text,
                               selectedDate,
                               immediateActionController.text,
-                              requiredFollowUp.value == true ? true : false,
+                              requiredFollowUp.value,
                               reportByController.text,
                               prelimReportIdController.text,
                             );
+
+                            if (success && context.mounted) {
+                              Navigator.of(context).pop(true);
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0XFF7DBD2C),
@@ -312,7 +316,7 @@ void showGenerateReportDialog(
   );
 }
 
-void _createPreliminaryReport(
+Future<bool> _createPreliminaryReport(
   BuildContext context,
   NotificationModel notification,
   String prelimFinding,
@@ -326,24 +330,24 @@ void _createPreliminaryReport(
   try {
     if (prelimFinding.isEmpty) {
       Toaster.showToast('Preliminary finding cannot be empty');
-      return;
+      return false;
     }
 
     if (faultyComponents.isEmpty) {
       Toaster.showToast('Faulty components cannot be empty');
-      return;
+      return false;
     }
 
     if (immediateAction.isEmpty) {
       Toaster.showToast('Immediate action cannot be empty');
-      return;
+      return false;
     }
 
     if (reportBy.isEmpty) {
       Toaster.showToast('Report by (ID) cannot be empty');
-      return;
+      return false;
     }
-    EasyLoading.show();
+    EasyLoading.show(status: 'Creating report...');
 
     // Create preliminary report data
     Map<String, dynamic> preliminaryReportData = {
@@ -372,11 +376,13 @@ void _createPreliminaryReport(
 
     EasyLoading.dismiss();
 
-    // ignore: use_build_context_synchronously
-    Navigator.of(context).pop();
-
     Toaster.showToast('Preliminary report created successfully');
+
+    return true;
   } catch (e) {
+    EasyLoading.dismiss();
     Toaster.showToast('Error creating preliminary report: $e');
+
+    return false;
   }
 }

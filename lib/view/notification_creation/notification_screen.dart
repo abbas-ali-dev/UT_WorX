@@ -1,9 +1,10 @@
-// ignore_for_file: deprecated_member_use// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use
 
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/firebase_models/fb_notification_model.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_widgets.dart';
@@ -46,11 +47,50 @@ class _NotificationTableState extends State<NotificationTable> {
   final ScrollController _verticalScrollController = ScrollController();
   final ScrollController _horizontalScrollController = ScrollController();
 
+  // Add this state variable for caching
+  Map<String, bool> _reportExistsCache = {};
+
   @override
   void dispose() {
     _verticalScrollController.dispose();
     _horizontalScrollController.dispose();
     super.dispose();
+  }
+
+  // Add this method to check if report exists
+  Future<bool> _checkReportExists(String orderId) async {
+    // Check cache first
+    if (_reportExistsCache.containsKey(orderId)) {
+      return _reportExistsCache[orderId]!;
+    }
+
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('PreliminaryReports')
+          .doc('PR-$orderId')
+          .get();
+      final exists = doc.exists;
+
+      // Cache the result
+      if (mounted) {
+        setState(() {
+          _reportExistsCache[orderId] = exists;
+        });
+      }
+
+      return exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Add this method to refresh cache when report is created
+  void _refreshReportCache(String orderId) {
+    if (mounted) {
+      setState(() {
+        _reportExistsCache[orderId] = true;
+      });
+    }
   }
 
   @override
@@ -285,14 +325,6 @@ class _NotificationTableState extends State<NotificationTable> {
                                     maxLines: 1,
                                   ),
                                 )),
-                                // DataColumn(
-                                //     label: Expanded(
-                                //   child: Text(
-                                //     'PRELIM FINDING',
-                                //     overflow: TextOverflow.ellipsis,
-                                //     maxLines: 1,
-                                //   ),
-                                // )),
                                 DataColumn(
                                     label: Expanded(
                                   child: Text(
@@ -339,7 +371,6 @@ class _NotificationTableState extends State<NotificationTable> {
                                   DataCell(Text(data.orderId)),
                                   DataCell(Text(data.orderTitle)),
                                   DataCell(Text(data.assetSelection)),
-                                  // DataCell(Text(data.prelimFinding)),
                                   DataCell(Text(data.createdBy)),
                                   DataCell(
                                     Container(
@@ -390,27 +421,53 @@ class _NotificationTableState extends State<NotificationTable> {
                                     ),
                                   ),
                                   DataCell(
-                                    ElevatedButton(
-                                      onPressed: () {
-                                        showGenerateReportDialog(context, data);
+                                    FutureBuilder<bool>(
+                                      future: _checkReportExists(data.orderId),
+                                      builder: (context, snapshot) {
+                                        bool reportExists =
+                                            snapshot.data ?? false;
+
+                                        return ElevatedButton(
+                                          onPressed: () async {
+                                            if (reportExists) {
+                                              _showReportDetailsDialog(
+                                                  context, data.orderId);
+                                            } else {
+                                              // Show generate report dialog with callback
+                                              final result =
+                                                  await showGenerateReportDialog(
+                                                      context, data);
+
+                                              // If report was created successfully, refresh the cache
+                                              if (result == true) {
+                                                _refreshReportCache(
+                                                    data.orderId);
+                                              }
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: reportExists
+                                                ? Colors.deepPurpleAccent
+                                                : Colors.blue,
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            minimumSize: Size(60, 25),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(5),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            reportExists
+                                                ? 'View Report'
+                                                : 'Create Report',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        );
                                       },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.blue,
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 4),
-                                        minimumSize: Size(60, 25),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(5),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Create Report',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 12,
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 ]);
@@ -429,12 +486,319 @@ class _NotificationTableState extends State<NotificationTable> {
       );
     });
   }
+}
 
-  void _showNotificationDetailsDialog(
-      BuildContext context, NotificationModel notification) {
+void _showNotificationDetailsDialog(
+    BuildContext context, NotificationModel notification) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: ResponsiveLayout(
+          builder: (context, responsive) {
+            final dialogWidth = responsive.deviceValue(
+              mobile: 320.0,
+              tablet: 450.0,
+              desktop: 550.0,
+            );
+
+            final padding = responsive.deviceValue(
+              mobile: 16.0,
+              tablet: 20.0,
+              desktop: 24.0,
+            );
+
+            final titleFontSize = responsive.deviceValue(
+              mobile: 18.0,
+              tablet: 20.0,
+              desktop: 22.0,
+            );
+
+            final labelFontSize = responsive.deviceValue(
+              mobile: 14.0,
+              tablet: 15.0,
+              desktop: 16.0,
+            );
+
+            final contentFontSize = responsive.deviceValue(
+              mobile: 13.0,
+              tablet: 14.0,
+              desktop: 15.0,
+            );
+
+            return Container(
+              width: dialogWidth,
+              padding: EdgeInsets.all(padding),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Notification Details',
+                        style: TextStyle(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+
+                    // Order ID
+                    buildDetailRow(
+                      'Order ID:',
+                      notification.orderId,
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+                    SizedBox(height: 10),
+
+                    // Order Title
+                    buildDetailRow(
+                      'Order Title:',
+                      notification.orderTitle,
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+                    SizedBox(height: 10),
+
+                    // Description
+                    buildDetailRow(
+                      'Fault Observation:',
+                      notification.description,
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+                    SizedBox(height: 10),
+
+                    // Asset Selection
+                    buildDetailRow(
+                      'Asset Selection:',
+                      notification.assetSelection,
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+                    SizedBox(height: 10),
+
+                    // Work Category
+                    buildDetailRow(
+                      'Work Category:',
+                      notification.workCategory,
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+                    SizedBox(height: 10),
+
+                    // Priority
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Priority:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: labelFontSize,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          notification.priority,
+                          style: TextStyle(
+                            fontSize: contentFontSize,
+                            color: getPriorityColor(notification.priority),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+
+                    // Status
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Status:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: labelFontSize,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: getStatusColor(notification.status),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            notification.status,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: contentFontSize,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+
+                    // Breakdown/Bypass
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Breakdown/Bypass:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: labelFontSize,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          notification.breakdownBypass ? 'Yes' : 'No',
+                          style: TextStyle(
+                            fontSize: contentFontSize,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+
+                    // Created By
+                    buildDetailRow(
+                      'Created By:',
+                      notification.createdBy,
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+                    SizedBox(height: 10),
+
+                    // Created At
+                    buildDetailRow(
+                      'Created At:',
+                      notification.createdAt != null
+                          ? formatDateTime(notification.createdAt!)
+                          : '',
+                      labelFontSize,
+                      contentFontSize,
+                    ),
+
+                    SizedBox(height: 20),
+
+                    // Image Section
+                    if (notification.imageData != null &&
+                        notification.imageData!.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Attachment:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: labelFontSize,
+                            ),
+                          ),
+                          SizedBox(height: 10),
+                          Center(
+                            child: Container(
+                              constraints: BoxConstraints(
+                                maxHeight: 200,
+                                maxWidth: dialogWidth * 0.8,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey.shade300),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.memory(
+                                  base64Decode(notification.imageData!),
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (notification.imageName != null &&
+                              notification.imageName!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Center(
+                                child: Text(
+                                  notification.imageName!,
+                                  style: TextStyle(
+                                    fontSize: contentFontSize * 0.9,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+
+                    SizedBox(height: 20),
+
+                    // Close button
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0XFF7DBD2C),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          'Close',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: contentFontSize,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+// Add this method to show report details
+void _showReportDetailsDialog(BuildContext context, String orderId) async {
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('PreliminaryReports')
+        .doc('PR-$orderId')
+        .get();
+
+    if (!doc.exists) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Report not found')),
+        );
+      }
+      return;
+    }
+    final reportData = doc.data() as Map<String, dynamic>;
+
+    if (!context.mounted) return;
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
@@ -481,7 +845,7 @@ class _NotificationTableState extends State<NotificationTable> {
                     children: [
                       Center(
                         child: Text(
-                          'Notification Details',
+                          'Preliminary Report Details',
                           style: TextStyle(
                             fontSize: titleFontSize,
                             fontWeight: FontWeight.bold,
@@ -490,10 +854,19 @@ class _NotificationTableState extends State<NotificationTable> {
                       ),
                       SizedBox(height: 20),
 
+                      // Report ID
+                      buildDetailRow(
+                        'Report ID:',
+                        reportData['prelimReportId'] ?? '',
+                        labelFontSize,
+                        contentFontSize,
+                      ),
+                      SizedBox(height: 10),
+
                       // Order ID
                       buildDetailRow(
                         'Order ID:',
-                        notification.orderId,
+                        reportData['orderId'] ?? '',
                         labelFontSize,
                         contentFontSize,
                       ),
@@ -502,16 +875,7 @@ class _NotificationTableState extends State<NotificationTable> {
                       // Order Title
                       buildDetailRow(
                         'Order Title:',
-                        notification.orderTitle,
-                        labelFontSize,
-                        contentFontSize,
-                      ),
-                      SizedBox(height: 10),
-
-                      // Description
-                      buildDetailRow(
-                        'Fault Observation:',
-                        notification.description,
+                        reportData['orderTitle'] ?? '',
                         labelFontSize,
                         contentFontSize,
                       ),
@@ -520,27 +884,58 @@ class _NotificationTableState extends State<NotificationTable> {
                       // Asset Selection
                       buildDetailRow(
                         'Asset Selection:',
-                        notification.assetSelection,
+                        reportData['assetSelection'] ?? '',
                         labelFontSize,
                         contentFontSize,
                       ),
                       SizedBox(height: 10),
 
-                      // Work Category
+                      // Findings
                       buildDetailRow(
-                        'Work Category:',
-                        notification.workCategory,
+                        'Preliminary Findings:',
+                        reportData['findings'] ?? '',
                         labelFontSize,
                         contentFontSize,
                       ),
                       SizedBox(height: 10),
 
-                      // Priority
+                      // Faulty Components
+                      buildDetailRow(
+                        'Faulty Components:',
+                        reportData['faultyComponents'] ?? '',
+                        labelFontSize,
+                        contentFontSize,
+                      ),
+                      SizedBox(height: 10),
+
+                      // Report Date
+                      buildDetailRow(
+                        'Report Date:',
+                        reportData['reportDate'] != null
+                            ? formatDateTime(
+                                (reportData['reportDate'] as Timestamp)
+                                    .toDate())
+                            : '',
+                        labelFontSize,
+                        contentFontSize,
+                      ),
+                      SizedBox(height: 10),
+
+                      // Immediate Action
+                      buildDetailRow(
+                        'Immediate Action:',
+                        reportData['immediateAction'] ?? '',
+                        labelFontSize,
+                        contentFontSize,
+                      ),
+                      SizedBox(height: 10),
+
+                      // Follow-ups
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Priority:',
+                            'Required Follow-up:',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: labelFontSize,
@@ -548,14 +943,21 @@ class _NotificationTableState extends State<NotificationTable> {
                           ),
                           SizedBox(width: 10),
                           Text(
-                            notification.priority,
+                            reportData['followUps'] == true ? 'Yes' : 'No',
                             style: TextStyle(
                               fontSize: contentFontSize,
-                              color: getPriorityColor(notification.priority),
-                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
+                      ),
+                      SizedBox(height: 10),
+
+                      // Report By
+                      buildDetailRow(
+                        'Report By:',
+                        reportData['reportBy'] ?? '',
+                        labelFontSize,
+                        contentFontSize,
                       ),
                       SizedBox(height: 10),
 
@@ -575,11 +977,12 @@ class _NotificationTableState extends State<NotificationTable> {
                             padding: EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: getStatusColor(notification.status),
+                              color: getStatusColor(
+                                  reportData['status'] ?? 'Pending'),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              notification.status,
+                              reportData['status'] ?? 'Pending',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: contentFontSize,
@@ -588,57 +991,14 @@ class _NotificationTableState extends State<NotificationTable> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 10),
 
-                      // Breakdown/Bypass
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Breakdown/Bypass:',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: labelFontSize,
-                            ),
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            notification.breakdownBypass ? 'Yes' : 'No',
-                            style: TextStyle(
-                              fontSize: contentFontSize,
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-
-                      // Created By
-                      buildDetailRow(
-                        'Created By:',
-                        notification.createdBy,
-                        labelFontSize,
-                        contentFontSize,
-                      ),
-                      SizedBox(height: 10),
-
-                      // Created At
-                      buildDetailRow(
-                        'Created At:',
-                        notification.createdAt != null
-                            ? formatDateTime(notification.createdAt!)
-                            : '',
-                        labelFontSize,
-                        contentFontSize,
-                      ),
-
-                      SizedBox(height: 20),
-
-                      // Image Section - Add this new section
-                      if (notification.imageData != null &&
-                          notification.imageData!.isNotEmpty)
+                      // Image Section
+                      if (reportData['imageData'] != null &&
+                          reportData['imageData'].isNotEmpty)
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            SizedBox(height: 20),
                             Text(
                               'Attachment:',
                               style: TextStyle(
@@ -661,26 +1021,12 @@ class _NotificationTableState extends State<NotificationTable> {
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.memory(
-                                    base64Decode(notification.imageData!),
+                                    base64Decode(reportData['imageData']),
                                     fit: BoxFit.contain,
                                   ),
                                 ),
                               ),
                             ),
-                            if (notification.imageName != null &&
-                                notification.imageName!.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Center(
-                                  child: Text(
-                                    notification.imageName!,
-                                    style: TextStyle(
-                                      fontSize: contentFontSize * 0.9,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ),
-                              ),
                           ],
                         ),
 
@@ -690,7 +1036,7 @@ class _NotificationTableState extends State<NotificationTable> {
                       Center(
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.of(context).pop();
+                            Navigator.of(dialogContext).pop();
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Color(0XFF7DBD2C),
@@ -718,5 +1064,11 @@ class _NotificationTableState extends State<NotificationTable> {
         );
       },
     );
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading report: $e')),
+      );
+    }
   }
 }
