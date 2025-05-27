@@ -1,7 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:ut_worx/constant/toaster.dart';
 import 'package:ut_worx/firebase_models/fb_work_scheduling_model.dart';
 import 'package:ut_worx/utils/custom_widgets/custom_drawer.dart';
@@ -22,6 +26,9 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
   final ScrollController _verticalScrollController = ScrollController();
   final ScrollController _horizontalScrollController = ScrollController();
 
+  // Add StreamSubscription to manage the listener
+  StreamSubscription<QuerySnapshot>? _followUpSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -34,43 +41,74 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
   void dispose() {
     _verticalScrollController.dispose();
     _horizontalScrollController.dispose();
+    // Cancel the stream subscription to prevent memory leaks
+    _followUpSubscription?.cancel();
     super.dispose();
   }
 
   void _checkForFollowUpRequests() {
     // Listen for preliminary reports with followUps=true
-    FirebaseFirestore.instance
+    _followUpSubscription = FirebaseFirestore.instance
         .collection('PreliminaryReports')
         .where('followUps', isEqualTo: true)
         .snapshots()
         .listen((snapshot) async {
+      // Check if widget is still mounted before calling setState
+      if (!mounted) return;
+
       if (snapshot.docs.isEmpty) {
         // If there are no follow-up requests at all
-        setState(() {
-          hasFollowUpRequests = false;
-        });
+
+        if (mounted) {
+          setState(() {
+            hasFollowUpRequests = false;
+          });
+        }
         return;
       }
 
-      // Get all work scheduling documents to check which follow-ups already have schedules
-      final workSchedulingSnapshot =
-          await FirebaseFirestore.instance.collection('WorkScheduling').get();
+      try {
+        // Get all work scheduling documents to check which follow-ups already have schedules
+        final workSchedulingSnapshot =
+            await FirebaseFirestore.instance.collection('WorkScheduling').get();
 
-      final scheduledOrderIds = workSchedulingSnapshot.docs
-          .map((doc) => doc.data()['workOrderId'] as String)
-          .toSet();
+        // Check if widget is still mounted after async operation
+        if (!mounted) return;
 
-      // Filter out follow-up requests that already have work schedules
-      final pendingFollowUps = snapshot.docs.where((doc) {
-        final data = doc.data();
-        final orderId = data['orderId'] as String?;
-        return orderId != null && !scheduledOrderIds.contains(orderId);
-      }).toList();
+        final scheduledOrderIds = workSchedulingSnapshot.docs
+            .map((doc) => doc.data()['workOrderId'] as String)
+            .toSet();
 
-      // Update state based on whether there are any pending follow-ups
-      setState(() {
-        hasFollowUpRequests = pendingFollowUps.isNotEmpty;
-      });
+        // Filter out follow-up requests that already have work schedules
+        final pendingFollowUps = snapshot.docs.where((doc) {
+          final data = doc.data();
+          final orderId = data['orderId'] as String?;
+          return orderId != null && !scheduledOrderIds.contains(orderId);
+        }).toList();
+
+        // Update state based on whether there are any pending follow-ups
+        if (mounted) {
+          setState(() {
+            hasFollowUpRequests = pendingFollowUps.isNotEmpty;
+          });
+        }
+      } catch (e) {
+        // Handle any errors gracefully
+        debugPrint('Error checking follow-up requests: $e');
+        if (mounted) {
+          setState(() {
+            hasFollowUpRequests = false;
+          });
+        }
+      }
+    }, onError: (error) {
+      // Handle stream errors
+      debugPrint('Stream error in _checkForFollowUpRequests: $error');
+      if (mounted) {
+        setState(() {
+          hasFollowUpRequests = false;
+        });
+      }
     });
   }
 
@@ -329,6 +367,15 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
                                             ),
                                           ),
                                         ),
+                                        DataColumn(
+                                          label: Expanded(
+                                            child: Text(
+                                              'SPARE PARTS',
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                       rows: scheduleData.map((data) {
                                         return DataRow(cells: [
@@ -338,7 +385,7 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
                                           DataCell(Text(
                                             data.scheduledDate != null
                                                 ? _formatDate(
-                                                    data.scheduledDate)
+                                                    data.scheduledDate!)
                                                 : 'Not scheduled',
                                           )),
                                           DataCell(Text(data.scheduledTime)),
@@ -360,6 +407,100 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
                                                 style: const TextStyle(
                                                     color: Colors.white),
                                               ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Container(
+                                              width: 120,
+                                              child: data.spareParts != null &&
+                                                      data.spareParts!
+                                                          .isNotEmpty
+                                                  ? Wrap(
+                                                      spacing: 4,
+                                                      runSpacing: 4,
+                                                      children: (data.spareParts
+                                                              as List<dynamic>)
+                                                          .take(2)
+                                                          .map((part) {
+                                                        return Container(
+                                                          padding: EdgeInsets
+                                                              .symmetric(
+                                                                  horizontal: 6,
+                                                                  vertical: 2),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Color(
+                                                                    0XFF7DBD2C)
+                                                                .withOpacity(
+                                                                    0.1),
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        12),
+                                                            border: Border.all(
+                                                                color: Color(
+                                                                    0XFF7DBD2C)),
+                                                          ),
+                                                          child: Text(
+                                                            part
+                                                                .toString()
+                                                                .replaceAll(
+                                                                    '_', ' '),
+                                                            style: TextStyle(
+                                                              fontSize: 10,
+                                                              color: Color(
+                                                                  0XFF7DBD2C),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      }).toList()
+                                                        ..addAll([
+                                                          if ((data.spareParts
+                                                                      as List<
+                                                                          dynamic>)
+                                                                  .length >
+                                                              2)
+                                                            Container(
+                                                              padding: EdgeInsets
+                                                                  .symmetric(
+                                                                      horizontal:
+                                                                          6,
+                                                                      vertical:
+                                                                          2),
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .withOpacity(
+                                                                        0.1),
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            12),
+                                                                border: Border.all(
+                                                                    color: Colors
+                                                                        .grey),
+                                                              ),
+                                                              child: Text(
+                                                                '+${(data.spareParts as List<dynamic>).length - 2}',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 10,
+                                                                  color: Colors
+                                                                      .grey
+                                                                      .shade700,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                        ]),
+                                                    )
+                                                  : Text(
+                                                      'No spare parts',
+                                                      style: TextStyle(
+                                                        color: Colors.grey,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
                                             ),
                                           ),
                                         ]);
@@ -388,203 +529,507 @@ class _WorkSchedulingScreenState extends State<WorkSchedulingScreen> {
   }
 
   void _showFollowUpRequestsDialog(BuildContext context) async {
-    final followUpRequestsSnapshot = await FirebaseFirestore.instance
-        .collection('PreliminaryReports')
-        .where('followUps', isEqualTo: true)
-        .get();
+    if (!mounted) return;
 
-    // Get all work scheduling documents to check which follow-ups already have schedules
-    final workSchedulingSnapshot =
-        await FirebaseFirestore.instance.collection('WorkScheduling').get();
+    try {
+      final followUpRequestsSnapshot = await FirebaseFirestore.instance
+          .collection('PreliminaryReports')
+          .where('followUps', isEqualTo: true)
+          .get();
 
-    final scheduledOrderIds = workSchedulingSnapshot.docs
-        .map((doc) => doc.data()['workOrderId'] as String)
-        .toSet();
+      if (!mounted) return;
 
-    // Filter out follow-up requests that already have work schedules
-    final pendingFollowUps = followUpRequestsSnapshot.docs.where((doc) {
-      final data = doc.data();
-      final orderId = data['orderId'] as String?;
-      return orderId != null && !scheduledOrderIds.contains(orderId);
-    }).toList();
+      // Get all work scheduling documents to check which follow-ups already have schedules
+      final workSchedulingSnapshot =
+          await FirebaseFirestore.instance.collection('WorkScheduling').get();
 
-    // Update state based on whether there are any pending follow-ups
-    setState(() {
-      hasFollowUpRequests = pendingFollowUps.isNotEmpty;
-    });
+      if (!mounted) return;
 
-    if (pendingFollowUps.isEmpty) {
-      // If there are no pending follow-up requests, show a message
-      Toaster.showToast('No pending follow-up requests');
-      return;
-    }
+      final scheduledOrderIds = workSchedulingSnapshot.docs
+          .map((doc) => doc.data()['workOrderId'] as String)
+          .toSet();
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            width: 500,
-            padding: EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Follow-Up Requests',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+      // Filter out follow-up requests that already have work schedules
+      final pendingFollowUps = followUpRequestsSnapshot.docs.where((doc) {
+        final data = doc.data();
+        final orderId = data['orderId'] as String?;
+        return orderId != null && !scheduledOrderIds.contains(orderId);
+      }).toList();
+
+      // Update state based on whether there are any pending follow-ups
+      if (mounted) {
+        setState(() {
+          hasFollowUpRequests = pendingFollowUps.isNotEmpty;
+        });
+      }
+
+      if (pendingFollowUps.isEmpty) {
+        // If there are no pending follow-up requests, show a message
+        Toaster.showToast('No pending follow-up requests');
+        return;
+      }
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              width: 500,
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Follow-Up Requests',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                SizedBox(height: 15),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('PreliminaryReports')
-                      .where('followUps', isEqualTo: true)
-                      .snapshots(),
-                  builder: (context, prelimReportSnapshot) {
-                    if (prelimReportSnapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0XFF7DBD2C),
-                        ),
-                      );
-                    }
+                  SizedBox(height: 15),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('PreliminaryReports')
+                        .where('followUps', isEqualTo: true)
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      }
 
-                    if (prelimReportSnapshot.hasError) {
-                      return Text('Error: ${prelimReportSnapshot.error}');
-                    }
+                      if (snapshot.hasError) {
+                        return Text('Error: ${snapshot.error}');
+                      }
 
-                    if (!prelimReportSnapshot.hasData ||
-                        prelimReportSnapshot.data!.docs.isEmpty) {
-                      return Text('No follow-up requests found');
-                    }
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Text('No follow-up requests found');
+                      }
 
-                    // Get all work scheduling documents to check for existing IDs
-                    return FutureBuilder<QuerySnapshot>(
-                      future: FirebaseFirestore.instance
-                          .collection('WorkScheduling')
-                          .get(),
-                      builder: (context, workScheduleSnapshot) {
-                        if (workScheduleSnapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0XFF7DBD2C),
-                            ),
-                          );
-                        }
-
-                        if (workScheduleSnapshot.hasError) {
-                          return Text('Error: ${workScheduleSnapshot.error}');
-                        }
-
-                        // Extract existing work order IDs
-                        final Set<dynamic> existingWorkOrderIds =
-                            workScheduleSnapshot.data != null
-                                ? workScheduleSnapshot.data!.docs
-                                    .map((doc) =>
-                                        (doc.data() as Map<String, dynamic>)[
-                                            'workOrderId'] ??
-                                        '')
-                                    .toSet()
-                                : {};
-
-                        // Filter preliminary reports to exclude those that already have work schedules
-                        final filteredReports =
-                            prelimReportSnapshot.data!.docs.where((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          final reportOrderId = data['orderId'] ?? '';
-                          return !existingWorkOrderIds.contains(reportOrderId);
-                        }).toList();
-
-                        if (filteredReports.isEmpty) {
-                          return Text('No new follow-up requests found');
-                        }
-
-                        return SizedBox(
-                          height: 300,
-                          child: ListView.builder(
-                            itemCount: filteredReports.length,
-                            itemBuilder: (context, index) {
-                              final doc = filteredReports[index];
+                      return Container(
+                        height: 300,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: snapshot.data!.docs.map((doc) {
                               final data = doc.data() as Map<String, dynamic>;
-
                               return Card(
                                 margin: EdgeInsets.only(bottom: 10),
                                 child: ListTile(
-                                  title: Text(
-                                      'Order ID: ${data['orderId'] ?? ''}'),
+                                  title: Text(data['orderTitle'] ?? 'No Title'),
                                   subtitle: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                          'Title: ${data['orderTitle'] ?? ''}'),
+                                          'Order ID: ${data['orderId'] ?? 'N/A'}'),
                                       Text(
-                                          'Asset: ${data['assetSelection'] ?? ''}'),
+                                          'Asset: ${data['assetSelection'] ?? 'N/A'}'),
                                       Text(
-                                          'Findings: ${data['findings'] ?? ''}'),
+                                          'Findings: ${data['findings'] ?? 'N/A'}'),
                                     ],
                                   ),
                                   trailing: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      _showCreateWorkScheduleDialog(
+                                          context, data);
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Color(0XFF7DBD2C),
                                     ),
-                                    onPressed: () {
-                                      // Create a work schedule from this request
-                                      Navigator.pop(context);
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return CreateWorkScheduling(
-                                            prefilledData: {
-                                              'workOrderId': data['orderId'],
-                                              'assetSelection':
-                                                  data['assetSelection'],
-                                            },
-                                          );
-                                        },
-                                      );
-                                    },
                                     child: Text(
-                                      'Schedule',
+                                      'Schedule Work',
                                       style: TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),
                               );
-                            },
+                            }).toList(),
                           ),
-                        );
-                      },
-                    );
-                  },
-                ),
-                SizedBox(height: 15),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
+                        ),
+                      );
                     },
-                    child: Text('Close',
+                  ),
+                  SizedBox(height: 15),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Text('Close'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      debugPrint('Error showing follow-up requests dialog: $e');
+      if (mounted) {
+        Toaster.showToast('Error loading follow-up requests');
+      }
+    }
+  }
+
+  void _showCreateWorkScheduleDialog(
+      BuildContext context, Map<String, dynamic> followUpData) {
+    final TextEditingController workOrderIdController = TextEditingController(
+      text: followUpData['orderId'] ?? '',
+    );
+    final TextEditingController workOrderTitleController =
+        TextEditingController(
+      text: followUpData['orderTitle'] ?? '',
+    );
+    final TextEditingController assetSelectionController =
+        TextEditingController(
+      text: followUpData['assetSelection'] ?? '',
+    );
+    final TextEditingController workDescriptionController =
+        TextEditingController();
+    final TextEditingController assignedToController = TextEditingController();
+    final TextEditingController estimatedHoursController =
+        TextEditingController();
+
+    String priority = 'Medium';
+    DateTime scheduledDate = DateTime.now();
+    TimeOfDay scheduledTime = TimeOfDay.now();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: 600,
+                padding: EdgeInsets.all(20),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Create Work Schedule',
                         style: TextStyle(
-                            color: Color(0XFF7DBD2C),
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold)),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+
+                      // Work Order ID
+                      Text('Work Order ID:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      TextField(
+                        controller: workOrderIdController,
+                        enabled: false,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          fillColor: Colors.grey[200],
+                          filled: true,
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Work Order Title
+                      Text('Work Order Title:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      TextField(
+                        controller: workOrderTitleController,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter work order title',
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Asset Selection
+                      Text('Asset Selection:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      TextField(
+                        controller: assetSelectionController,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter asset selection',
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Work Description
+                      Text('Work Description:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      TextField(
+                        controller: workDescriptionController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter work description',
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Assigned To
+                      Text('Assigned To:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      TextField(
+                        controller: assignedToController,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter assigned person',
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Priority
+                      Text('Priority:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      DropdownButtonFormField<String>(
+                        value: priority,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ['Low', 'Medium', 'High', 'Critical']
+                            .map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            priority = newValue ?? 'Medium';
+                          });
+                        },
+                      ),
+                      SizedBox(height: 15),
+
+                      // Scheduled Date
+                      Text('Scheduled Date:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      InkWell(
+                        onTap: () async {
+                          final DateTime? picked = await showDatePicker(
+                            context: context,
+                            initialDate: scheduledDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2101),
+                          );
+                          if (picked != null && picked != scheduledDate) {
+                            setState(() {
+                              scheduledDate = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 15),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                  '${scheduledDate.day}/${scheduledDate.month}/${scheduledDate.year}'),
+                              Icon(Icons.calendar_today),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Scheduled Time
+                      Text('Scheduled Time:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      InkWell(
+                        onTap: () async {
+                          final TimeOfDay? picked = await showTimePicker(
+                            context: context,
+                            initialTime: scheduledTime,
+                          );
+                          if (picked != null && picked != scheduledTime) {
+                            setState(() {
+                              scheduledTime = picked;
+                            });
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 15),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('${scheduledTime.format(context)}'),
+                              Icon(Icons.access_time),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 15),
+
+                      // Estimated Hours
+                      Text('Estimated Hours:',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      SizedBox(height: 5),
+                      TextField(
+                        controller: estimatedHoursController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: 'Enter estimated hours',
+                        ),
+                      ),
+                      SizedBox(height: 25),
+
+                      // Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('Cancel'),
+                          ),
+                          SizedBox(width: 10),
+                          ElevatedButton(
+                            onPressed: () async {
+                              await _createWorkSchedule(
+                                context,
+                                workOrderIdController.text,
+                                workOrderTitleController.text,
+                                assetSelectionController.text,
+                                workDescriptionController.text,
+                                assignedToController.text,
+                                priority,
+                                scheduledDate,
+                                scheduledTime,
+                                estimatedHoursController.text,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color(0XFF7DBD2C),
+                            ),
+                            child: Text(
+                              'Create Schedule',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  Future<void> _createWorkSchedule(
+    BuildContext context,
+    String workOrderId,
+    String workOrderTitle,
+    String assetSelection,
+    String workDescription,
+    String assignedTo,
+    String priority,
+    DateTime scheduledDate,
+    TimeOfDay scheduledTime,
+    String estimatedHours,
+  ) async {
+    if (!mounted) return;
+
+    try {
+      // Validation
+      if (workOrderTitle.isEmpty) {
+        Toaster.showToast('Work order title cannot be empty');
+        return;
+      }
+      if (workDescription.isEmpty) {
+        Toaster.showToast('Work description cannot be empty');
+        return;
+      }
+      if (assignedTo.isEmpty) {
+        Toaster.showToast('Assigned to cannot be empty');
+        return;
+      }
+      if (estimatedHours.isEmpty) {
+        Toaster.showToast('Estimated hours cannot be empty');
+        return;
+      }
+
+      EasyLoading.show(status: 'Creating work schedule...');
+
+      // Combine date and time
+      final scheduledDateTime = DateTime(
+        scheduledDate.year,
+        scheduledDate.month,
+        scheduledDate.day,
+        scheduledTime.hour,
+        scheduledTime.minute,
+      );
+
+      // Create work schedule data
+      final workScheduleData = {
+        'workOrderId': workOrderId,
+        'workOrderTitle': workOrderTitle,
+        'assetSelection': assetSelection,
+        'workDescription': workDescription,
+        'assignedTo': assignedTo,
+        'priority': priority,
+        'scheduledDateTime': Timestamp.fromDate(scheduledDateTime),
+        'estimatedHours': double.tryParse(estimatedHours) ?? 0.0,
+        'status': 'Scheduled',
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdBy': FirebaseAuth.instance.currentUser?.email ?? '',
+      };
+
+      // Save to Firestore
+      await FirebaseFirestore.instance
+          .collection('WorkScheduling')
+          .add(workScheduleData);
+
+      EasyLoading.dismiss();
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        Toaster.showToast('Work schedule created successfully');
+      }
+    } catch (e) {
+      EasyLoading.dismiss();
+      if (mounted) {
+        Toaster.showToast('Error creating work schedule: $e');
+      }
+      debugPrint('Error creating work schedule: $e');
+    }
   }
 }

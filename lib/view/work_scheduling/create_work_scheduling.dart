@@ -30,10 +30,10 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
   String? selectedTechnician;
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
-  String? selectedSparePart;
+  List<String> selectedSpareParts = [];
 
-  // Lists for dropdowns
-  List<dynamic> technicians = [];
+  // Lists for dropdowns - change this to store user objects with role info
+  List<Map<String, dynamic>> technicians = [];
 
   @override
   void initState() {
@@ -43,25 +43,42 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
   }
 
   Future<void> loadData() async {
-    // Load technicians from Firebase
-    final techniciansSnapshot =
-        await FirebaseFirestore.instance.collection('Users').get();
-    setState(() {
-      technicians =
-          techniciansSnapshot.docs.map((doc) => doc.data()['email']).toList();
-    });
+    try {
+      // Load technicians from Firebase with role filtering
+      final techniciansSnapshot = await FirebaseFirestore.instance
+          .collection('Users')
+          .where('role', whereIn: ['Operator', 'Technician']) // Filter by roles
+          .get();
 
-    // Set default values
-    selectedDate = DateTime.now().add(const Duration(days: 1));
-    selectedTime = TimeOfDay.now();
+      setState(() {
+        technicians = techniciansSnapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'email': data['email'] ?? '',
+            'name': data['name'] ??
+                data['email'] ??
+                '', // Use name if available, else email
+            'role': data['role'] ?? '',
+            'uid': doc.id,
+          };
+        }).toList();
+      });
 
-    // Prefill data if available
-    if (widget.prefilledData != null) {
-      _workOrderIdController.text = widget.prefilledData!['workOrderId'] ?? '';
-      // You can prefill other fields as needed
-    } else {
-      // Generate a unique ID if not prefilled
-      _workOrderIdController.text = const Uuid().v4().substring(0, 8);
+      // Set default values
+      selectedDate = DateTime.now().add(const Duration(days: 1));
+      selectedTime = TimeOfDay.now();
+
+      // Prefill data if available
+      if (widget.prefilledData != null) {
+        _workOrderIdController.text =
+            widget.prefilledData!['workOrderId'] ?? '';
+      } else {
+        // Generate a unique ID if not prefilled
+        _workOrderIdController.text = const Uuid().v4().substring(0, 8);
+      }
+    } catch (e) {
+      debugPrint('Error loading technicians: $e');
+      Toaster.showToast('Error loading technicians');
     }
   }
 
@@ -96,8 +113,9 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
     }
 
     // Add this validation
-    if (selectedSparePart == null || selectedSparePart!.isEmpty) {
-      Toaster.showToast('Please select a spare part');
+
+    if (selectedSpareParts.isEmpty) {
+      Toaster.showToast('Please select at least one spare part');
       return;
     }
 
@@ -146,7 +164,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
           'scheduledTime': _formatTimeWithAmPm(selectedTime!),
           'estimatedHours': _estimatedHoursController.text,
           'status': 'Scheduled', // Default status
-          'sparePart': selectedSparePart,
+          'spareParts': selectedSpareParts,
           'createdBy': userId,
           'createdAt': FieldValue.serverTimestamp(),
         };
@@ -262,6 +280,93 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
     );
   }
 
+  void _showSparePartsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: 400,
+                padding: EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Spare Parts',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    SizedBox(
+                      height: 300,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: getSparePartValues().map((sparePart) {
+                            final isSelected =
+                                selectedSpareParts.contains(sparePart);
+                            return CheckboxListTile(
+                              title: Text(sparePart.replaceAll('_', ' ')),
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setDialogState(() {
+                                  if (value == true) {
+                                    selectedSpareParts.add(sparePart);
+                                  } else {
+                                    selectedSpareParts.remove(sparePart);
+                                  }
+                                });
+                              },
+                              activeColor: Color(0XFF7DBD2C),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: Text('Cancel',
+                              style: TextStyle(color: Colors.black)),
+                        ),
+                        SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {}); // Update main dialog
+                            Navigator.of(context).pop();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0XFF7DBD2C),
+                          ),
+                          child: Text(
+                            'Done',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -333,8 +438,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                   const SizedBox(height: 5),
                   TextFormField(
                     controller: _workOrderIdController,
-                    readOnly: widget.prefilledData !=
-                        null, // Make it read-only if prefilled
+                    readOnly: widget.prefilledData != null,
                     decoration: InputDecoration(
                       hintText: 'Work Order ID',
                       hintStyle: TextStyle(color: Colors.grey),
@@ -356,7 +460,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                   ),
                   SizedBox(height: verticalSpacing),
 
-                  // Technician Assignment
+                  // Technician Assignment - Updated dropdown
                   Text(
                     'Assign PIC',
                     style: TextStyle(
@@ -368,7 +472,7 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                   DropdownButtonFormField<String>(
                     value: selectedTechnician,
                     decoration: InputDecoration(
-                      hintText: 'Select PIC',
+                      hintText: 'Select PIC (Operator/Technician)',
                       hintStyle: TextStyle(color: Colors.grey),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -384,16 +488,24 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                     dropdownColor: Colors.white,
                     icon: Icon(Icons.arrow_drop_down_outlined),
                     isExpanded: true,
+                    menuMaxHeight: 300,
                     onChanged: (String? newValue) {
                       setState(() {
                         selectedTechnician = newValue;
                       });
                     },
-                    items: technicians
-                        .map<DropdownMenuItem<String>>((dynamic value) {
+                    items:
+                        technicians.map<DropdownMenuItem<String>>((technician) {
                       return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
+                        value: technician['email'],
+                        child: Text(
+                          '${technician['name']} (${technician['role']})',
+                          style: TextStyle(
+                            fontSize: 14,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       );
                     }).toList(),
                   ),
@@ -507,48 +619,97 @@ class _CreateWorkSchedulingState extends State<CreateWorkScheduling> {
                   ),
                   SizedBox(height: verticalSpacing * 2),
 
-                  // Spare Part Selection
+                  // Spare Parts
                   Text(
-                    'Spare Part',
+                    'Spare Parts',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: labelFontSize,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  DropdownButtonFormField<String>(
-                    value: selectedSparePart,
-                    decoration: InputDecoration(
-                      hintText: 'Select Spare Part',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              BorderSide(color: Color(0XFFE5E7EB), width: 1)),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+
+                  InkWell(
+                    onTap: _showSparePartsDialog,
+                    child: Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0XFFE5E7EB)),
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              selectedSpareParts.isEmpty
+                                  ? 'Select Spare Parts'
+                                  : '${selectedSpareParts.length} spare part(s) selected',
+                              style: TextStyle(
+                                color: selectedSpareParts.isEmpty
+                                    ? Colors.grey
+                                    : Colors.black,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.arrow_drop_down_outlined),
+                        ],
                       ),
                     ),
-                    dropdownColor: Colors.white,
-                    icon: Icon(Icons.arrow_drop_down_outlined),
-                    isExpanded: true,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedSparePart = newValue;
-                      });
-                    },
-                    items: getSparePartValues()
-                        .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        // Display the value with spaces instead of underscores
-                        child: Text(value.replaceAll('_', ' ')),
-                      );
-                    }).toList(),
                   ),
+                  if (selectedSpareParts.isNotEmpty) ...[
+                    SizedBox(height: 10),
+                    Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: selectedSpareParts.map((sparePart) {
+                          return Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Color(0XFF7DBD2C),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  sparePart.replaceAll('_', ' '),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      selectedSpareParts.remove(sparePart);
+                                    });
+                                  },
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
                   SizedBox(height: verticalSpacing * 2),
 
                   // Buttons
